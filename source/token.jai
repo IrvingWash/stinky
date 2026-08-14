@@ -34,6 +34,11 @@ Token_Type :: enum {
     LESS_EQUALS;
     GREATER_EQUALS;
     ASSIGN; // :=
+
+    INTEGER;
+    FLOAT;
+    STRING;
+    IDENTIFIER;
 }
 
 make_lexeme :: (source: string, start: s32, last: s32) -> string {

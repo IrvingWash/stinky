@@ -1,8 +1,10 @@
-# This is a comment
-:+**-;   ;+
-+++++
-----~<-
+# What's up?
+code := 451
 
-;>;;;; ; ; ; ;
-++>===~=<=- := == *
+attempt := 420
 
+if attempt == code then
+    println("You are a hacker!")
+else
+    println('You have no heart')
+end

@@ -24,7 +24,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 continue;
 
             case #char "#"; // Comment
-                while source[next] != "\n" {
+                while source[next] != #char "\n" {
                     next += 1;
                 }
 
@@ -94,8 +94,39 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 } else {
                     token_type = .COLON;
                 }
-        }
+            case #char "\""; #through;
+            case #char "'";
+                while source[next] != char {
+                    next += 1;
+                }
 
+                next += 1;
+                token_type = .STRING;
+            case;
+                if is_alpha(char) {
+                    while is_alnum(source[next]) {
+                        next += 1;
+                    }
+
+                    token_type = .IDENTIFIER;
+                } else if is_digit(char) {
+                    while is_digit(source[next]) {
+                        next += 1;
+                    }
+
+                    if source[next] == #char "." {
+                        next += 1;
+
+                        while is_digit(source[next]) {
+                            next += 1;
+                        }
+
+                        token_type = .FLOAT;
+                    } else {
+                        token_type = .INTEGER;
+                    }
+                }
+        }
 
         lexeme := make_lexeme(source, start, next);
 
