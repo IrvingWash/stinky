@@ -66,7 +66,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                     token_type = .EQUALS_EQUALS;
                     next += 1;
                 }
-            case #char "!";
+            case #char "~";
                 if source[next] == #char "=" {
                     token_type = .NOT_EQUALS;
                     next += 1;
