@@ -60,7 +60,40 @@ tokenize :: (source: string) -> error: string, [..]Token {
             case #char "?";
                 token_type = .QUESTION;
             case #char "%";
-                token_type = .PERCENT;
+                token_type = .MODULO;
+            case #char "=";
+                if source[next] == #char "=" {
+                    token_type = .EQUALS_EQUALS;
+                    next += 1;
+                }
+            case #char "!";
+                if source[next] == #char "=" {
+                    token_type = .NOT_EQUALS;
+                    next += 1;
+                } else {
+                    token_type = .NOT;
+                }
+            case #char "<";
+                if source[next] == #char "=" {
+                    token_type = .LESS_EQUALS;
+                    next += 1;
+                } else {
+                    token_type = .LESS;
+                }
+            case #char ">";
+                if source[next] == #char "=" {
+                    token_type = .GREATER_EQUALS;
+                    next += 1;
+                } else {
+                    token_type = .GREATER;
+                }
+            case #char ":";
+                if source[next] == #char "=" {
+                    token_type = .ASSIGN;
+                    next += 1;
+                } else {
+                    token_type = .COLON;
+                }
         }
 
 
@@ -87,37 +120,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
 
 #scope_file
 
-Token :: struct {
-    type:   Token_Type;
-    lexeme: string;
-    line:   u32;
-}
-
-Token_Type :: enum {
-    UNKNOWN;
-
-    PLUS;
-    MINUS;
-    STAR;
-    L_PAREN;
-    R_PAREN;
-    L_CURLY;
-    R_CURLY;
-    L_SQUARE;
-    R_SQUARE;
-    DOT;
-    COMMA;
-    CARET;
-    SLASH;
-    SEMICOLON;
-    QUESTION;
-    PERCENT;
-    HASH;
-}
-
-make_lexeme :: (source: string, start: s32, last: s32) -> string {
-    return string.{ last - start, *source[start] };
-}
-
 #import "Basic";
 #import "String";
+
+#import,file "token.jai";
