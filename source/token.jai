@@ -40,7 +40,3 @@ Token_Type :: enum {
     STRING;
     IDENTIFIER;
 }
-
-make_lexeme :: (source: string, start: s32, last: s32) -> string {
-    return string.{ last - start, *source[start] };
-}
