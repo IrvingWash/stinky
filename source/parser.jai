@@ -3,14 +3,13 @@ AST :: struct {
     root_index:  int = -1;
 }
 
-make_ast :: (tokens: []Token) -> AST {
+make_ast :: (tokens: []Token) -> error: string, AST {
     ast: AST;
 
     current_index: int;
 
-    ast.root_index = get_expression(tokens, *current_index, *ast.expressions);
-
-    return ast;
+    error:, ast.root_index = get_expression(tokens, *current_index, *ast.expressions);
+    return error, ast;
 }
 
 destroy_ast :: (ast: *AST) {
@@ -33,8 +32,11 @@ pretty_print_ast :: (ast: AST) {
 #scope_file
 
 // <expr> ::= <term> (('+' | '-') <term>)*
-get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
-    lhs_index := get_term(tokens, current_index, expressions);
+get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_term(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
 
     while (
         current_index.* < tokens.count
@@ -50,19 +52,26 @@ get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model
         expression.binary_operator = Model.Binary_Operator.{
             lhs_index = lhs_index,
             op = tokens[current_index.* - 1],
-            rhs_index = get_term(tokens, current_index, expressions),
         };
+        error, rhs_index := get_term(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.binary_operator.rhs_index = rhs_index;
 
         array_add(expressions, expression);
         lhs_index = expressions.count - 1;
     }
 
-    return lhs_index;
+    return "", lhs_index;
 }
 
 // <term> ::= <factor> (('*' | '/') <factor>)*
-get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
-    lhs_index := get_factor(tokens, current_index, expressions);
+get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_factor(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
 
     while (
         current_index.* < tokens.count
@@ -78,23 +87,28 @@ get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expre
         expression.binary_operator = Model.Binary_Operator.{
             lhs_index = lhs_index,
             op = tokens[current_index.* - 1],
-            rhs_index = get_factor(tokens, current_index, expressions),
         };
+        error, rhs_index := get_factor(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.binary_operator.rhs_index = rhs_index;
 
         array_add(expressions, expression);
         lhs_index = expressions.count - 1;
     }
 
-    return lhs_index;
+    return "", lhs_index;
 }
 
 // <factor> ::= <unary>
-get_factor :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
-    return get_unary(tokens, current_index, expressions);
+get_factor :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, index := get_unary(tokens, current_index, expressions);
+    return error, index;
 }
 
 // <unary> ::= ('+' | '-' | '~') <unary> | <primary>
-get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
+get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     if (
         tokens[current_index.*].type == .NOT
         || tokens[current_index.*].type == .MINUS
@@ -106,19 +120,24 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
         expression.kind = .UNARY_OPERATOR;
         expression.unary_operator = Model.Unary_Operator.{
             op = tokens[current_index.* - 1],
-            operand_index = get_unary(tokens, current_index, expressions),
         };
+        error, operand_index := get_unary(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.unary_operator.operand_index = operand_index;
 
         array_add(expressions, expression);
 
-        return expressions.count - 1;
+        return "", expressions.count - 1;
     } else {
-        return get_primary(tokens, current_index, expressions);
+        error, index := get_primary(tokens, current_index, expressions);
+        return error, index;
     }
 }
 
 // <primary> ::= <integer> | <float> | '(' <expr> ')'
-get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
+get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     expression: Model.Expression;
 
     if tokens[current_index.*].type == {
@@ -139,10 +158,16 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
         case .L_PAREN;
             current_index.* += 1;
 
-            grouping_expression_index := get_expression(tokens, current_index, expressions);
+            error, grouping_expression_index := get_expression(tokens, current_index, expressions);
+            if error {
+                return error, -1;
+            }
 
-            if tokens[current_index.*].type != .R_PAREN {
-                assert(false); // @Todo
+            if (
+                current_index.* < tokens.count
+                &&  tokens[current_index.*].type != .R_PAREN
+            ) {
+                return "Unterminated paren", -1;
             }
             current_index.* += 1;
 
@@ -150,11 +175,13 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             expression.grouping = Model.Grouping.{
                 index = grouping_expression_index,
             };
+        case;
+            return "Failed to parse primary expression", -1;
     }
 
     array_add(expressions, expression);
 
-    return expressions.count - 1;
+    return "", expressions.count - 1;
 }
 
 pretty_print_expression :: (ast: AST, index: int, depth: int, builder: *String_Builder) {

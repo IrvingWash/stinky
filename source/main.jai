@@ -6,6 +6,7 @@
 );
 
 #import "File";
+#import "Print_Color";
 
 Config :: #import,file "config.jai";
 Lexer  :: #import,file "lexer.jai";
@@ -55,7 +56,10 @@ main :: () {
         print("Running the parser...\n");
         print("================================================================================\n");
     }
-    ast := Parser.make_ast(tokens);
+    error =, ast := Parser.make_ast(tokens);
+    if error {
+        terminate("Failed: %\n", error);
+    }
     defer Parser.destroy_ast(*ast);
     #if DEBUG {
         Parser.pretty_print_ast(ast);
@@ -63,7 +67,7 @@ main :: () {
 }
 
 terminate :: (format_string: string, args: ..Any) {
-    print(format_string, ..args);
+    print_color(format_string, ..args, .RED, to_standard_error = true);
 
     exit(1);
 }
