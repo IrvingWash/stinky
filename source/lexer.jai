@@ -1,6 +1,10 @@
 tokenize :: (source: string) -> error: string, [..]Token {
     tokens: [..]Token;
 
+    if source.count < 1 {
+        return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"result := 69 + 420\"", tokens;
+    }
+
     line:  u32 = 1;
     start: s32;
     next:  s32;

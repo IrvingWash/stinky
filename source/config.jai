@@ -10,7 +10,7 @@ make_config_from_arguments :: () -> error: string, Config {
     ti_config := cast(*Type_Info_Struct, type_info(Config));
 
     if ti_config.members.count > arguments.count - 1 {
-        return "Too few arguments!", config;
+        return "You need to specify the path to your stinky code file", config;
     }
 
     config.file_path = copy_string(arguments[1]);

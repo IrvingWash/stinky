@@ -6,6 +6,10 @@ AST :: struct {
 make_ast :: (tokens: []Token) -> error: string, AST {
     ast: AST;
 
+    if tokens.count < 1 {
+        return "Your stinky code doesn't contain any tokens, so we are unable to parse them, sorry!", ast;
+    }
+
     current_index: int;
 
     error:, ast.root_index = get_expression(tokens, *current_index, *ast.expressions);
