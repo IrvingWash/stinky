@@ -28,6 +28,7 @@ Token_Type :: enum {
     LESS;
     GREATER;
     COLON;
+    EQUALS;
 
     EQUALS_EQUALS;
     NOT_EQUALS;
