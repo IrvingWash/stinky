@@ -111,12 +111,12 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
 
         return expressions.count - 1;
     } else {
-        return get_prime(tokens, current_index, expressions);
+        return get_primary(tokens, current_index, expressions);
     }
 }
 
 // <primary> ::= <integer> | <float> | '(' <expr> ')'
-get_prime :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
+get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> int {
     expression: Model.Expression;
 
     if tokens[current_index.*].type == {
