@@ -24,12 +24,16 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 line += 1;
                 continue;
 
-            case #char "#"; // Comment
-                while source[next] != #char "\n" {
-                    next += 1;
-                }
+            case #char "-"; // Minus or comment
+                if source[next] != #char "-" {
+                    token_type = .MINUS;
+                } else {
+                    while source[next] != #char "\n" {
+                        next += 1;
+                    }
 
-                continue;
+                    continue;
+                }
             case #char "(";
                 token_type = .L_PAREN;
             case #char ")";
@@ -48,8 +52,6 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 token_type = .COMMA;
             case #char "+";
                 token_type = .PLUS;
-            case #char "-";
-                token_type = .MINUS;
             case #char "*";
                 token_type = .STAR;
             case #char "^";
