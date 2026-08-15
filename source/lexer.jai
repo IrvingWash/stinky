@@ -103,6 +103,11 @@ tokenize :: (source: string) -> error: string, [..]Token {
             case #char "'";
                 while source[next] != char {
                     next += 1;
+
+                    if next >= source.count {
+                        return sprint("Unterminated string literal at line '%': '%'", line, make_lexeme(source, start, next)),
+                            tokens;
+                    }
                 }
 
                 next += 1;
