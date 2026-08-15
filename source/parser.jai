@@ -19,7 +19,11 @@ destroy_ast :: (ast: *AST) {
 }
 
 pretty_print_ast :: (ast: AST) {
-    pretty_print_expression(ast, ast.root_index, 0);
+    builder: String_Builder;
+
+    pretty_print_expression(ast, ast.root_index, 0, *builder);
+
+    print(builder_to_string(*builder,, temp));
 }
 
 
@@ -151,28 +155,28 @@ get_prime :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
     return expressions.count - 1;
 }
 
-pretty_print_expression :: (ast: AST, index: int, depth: int) {
+pretty_print_expression :: (ast: AST, index: int, depth: int, builder: *String_Builder) {
     for 1..depth {
-        print("|___");
+        print(builder, "    ");
     }
 
     expression := ast.expressions[index];
 
     if expression.kind == {
         case .INTEGER;
-            print("(%)\n", expression.integer.value);
+            print(builder, "(%)\n", expression.integer.value);
         case .FLOAT;
-            print("(%)\n", expression._float.value);
+            print(builder, "(%)\n", expression._float.value);
         case .BINARY_OPERATOR;
-            print("(%)\n", expression.binary_operator.op.lexeme);
-            pretty_print_expression(ast, expression.binary_operator.lhs_index, depth + 1);
-            pretty_print_expression(ast, expression.binary_operator.rhs_index, depth + 1);
+            print(builder, "(%)\n", expression.binary_operator.op.lexeme);
+            pretty_print_expression(ast, expression.binary_operator.lhs_index, depth + 1, builder);
+            pretty_print_expression(ast, expression.binary_operator.rhs_index, depth + 1, builder);
         case .UNARY_OPERATOR;
-            print("(%)\n", expression.unary_operator.op.lexeme);
-            pretty_print_expression(ast, expression.unary_operator.operand_index, depth + 1);
+            print(builder, "(%)\n", expression.unary_operator.op.lexeme);
+            pretty_print_expression(ast, expression.unary_operator.operand_index, depth + 1, builder);
         case .GROUPING;
-            print("(())\n");
-            pretty_print_expression(ast, expression.grouping.index, depth + 1);
+            print(builder, "(())\n");
+            pretty_print_expression(ast, expression.grouping.index, depth + 1, builder);
     }
 }
 
