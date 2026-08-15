@@ -172,6 +172,18 @@ tokenize :: (source: string) -> error: string, [..]Token {
     return "", tokens;
 }
 
+pretty_print_tokens :: (tokens: []Token) {
+    for token: tokens {
+        if it_index != tokens.count - 1 {
+            print("% ", token.lexeme);
+        } else {
+            print("%", token.lexeme);
+        }
+    }
+
+    print("\n");
+}
+
 
 
 #scope_file
