@@ -21,6 +21,8 @@ destroy_ast :: (ast: *AST) {
 pretty_print_ast :: (ast: AST) {
     builder: String_Builder;
 
+    print(*builder, "AST: \n");
+
     pretty_print_expression(ast, ast.root_index, 0, *builder);
 
     print(builder_to_string(*builder,, temp));

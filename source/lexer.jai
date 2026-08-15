@@ -175,6 +175,8 @@ tokenize :: (source: string) -> error: string, [..]Token {
 pretty_print_tokens :: (tokens: []Token) {
     builder: String_Builder;
 
+    print(*builder, "Tokens: \n");
+
     for token: tokens {
         if it_index != tokens.count - 1 {
             print(*builder, "% ", token.lexeme);
