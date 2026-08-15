@@ -30,16 +30,26 @@ main :: () {
     }
     defer free(source);
 
+    #if DEBUG {
+        print("Running the lexer...\n");
+    }
     error =, tokens := Lexer.tokenize(source);
     if error {
         terminate("Failed: %\n", error);
     }
     defer array_free(tokens);
-    Lexer.pretty_print_tokens(tokens);
+    #if DEBUG {
+        Lexer.pretty_print_tokens(tokens);
+    }
 
+    #if DEBUG {
+        print("Running the parser...\n");
+    }
     ast := Parser.make_ast(tokens);
     defer Parser.destroy_ast(*ast);
-    Parser.pretty_print_ast(ast);
+    #if DEBUG {
+        Parser.pretty_print_ast(ast);
+    }
 }
 
 terminate :: (format_string: string, args: ..Any) {
