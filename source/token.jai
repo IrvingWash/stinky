@@ -39,4 +39,39 @@ Token_Type :: enum {
     FLOAT;
     STRING;
     IDENTIFIER;
+
+    IF;
+    THEN;
+    ELSE;
+    TRUE;
+    FALSE;
+    AND;
+    OR;
+    WHILE;
+    DO;
+    FOR;
+    FUNC;
+    NULL;
+    END;
 }
+
+Keyword :: struct {
+    lexeme:     string;
+    token_type: Token_Type;
+}
+
+KEYWORDS :: Keyword.[
+    { "if",    .IF    },
+    { "then",  .THEN  },
+    { "else",  .ELSE  },
+    { "true",  .TRUE  },
+    { "false", .FALSE },
+    { "and",   .AND   },
+    { "or",    .OR    },
+    { "while", .WHILE },
+    { "do",    .DO    },
+    { "for",   .FOR   },
+    { "func",  .FUNC  },
+    { "null",  .NULL  },
+    { "end",   .END   },
+];

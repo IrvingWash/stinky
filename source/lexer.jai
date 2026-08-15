@@ -11,6 +11,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
         start = next;
         next += 1;
 
+        lexeme: string;
         token_type := Token_Type.UNKNOWN;
 
         if char == {
@@ -94,7 +95,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 } else {
                     token_type = .COLON;
                 }
-            case #char "\""; #through;
+            case #char "\""; #through; // String literals
             case #char "'";
                 while source[next] != char {
                     next += 1;
@@ -103,13 +104,26 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 next += 1;
                 token_type = .STRING;
             case;
-                if is_alpha(char) {
+                if is_alpha(char) { // Identifiers and keywords
                     while is_alnum(source[next]) {
                         next += 1;
                     }
 
-                    token_type = .IDENTIFIER;
-                } else if is_digit(char) {
+                    lexeme = make_lexeme(source, start, next);
+
+                    is_keyword: bool;
+                    for keyword: KEYWORDS {
+                        if keyword.lexeme == lexeme {
+                            is_keyword = true;
+                            token_type = keyword.token_type;
+                            break;
+                        }
+                    }
+
+                    if !is_keyword {
+                        token_type = .IDENTIFIER;
+                    }
+                } else if is_digit(char) { // Integers and floats
                     while is_digit(source[next]) {
                         next += 1;
                     }
@@ -128,7 +142,9 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 }
         }
 
-        lexeme := make_lexeme(source, start, next);
+        if !lexeme {
+            lexeme = make_lexeme(source, start, next);
+        }
 
         if token_type == .UNKNOWN {
             return sprint("Unexpected token '%' at line %", lexeme, line), tokens;
