@@ -7,19 +7,19 @@
 
 #import "File";
 
-#import,file "lexer.jai";
-#import,file "config.jai";
+Config :: #import,file "config.jai";
+Lexer  :: #import,file "lexer.jai";
 
 main :: () {
     #if DEBUG {
         defer report_memory_leaks();
     }
 
-    error, config := make_config_from_arguments();
+    error, config := Config.make_config_from_arguments();
     if error {
         terminate("Failed: %\n", error);
     }
-    defer destroy_config(config);
+    defer Config.destroy_config(config);
 
     source, ok := read_entire_file(config.file_path);
     if !ok {
@@ -27,7 +27,7 @@ main :: () {
     }
     defer free(source);
 
-    error =, tokens := tokenize(source);
+    error =, tokens := Lexer.tokenize(source);
     if error {
         terminate("Failed: %\n", error);
     }

@@ -1,9 +1,9 @@
 tokenize :: (source: string) -> error: string, [..]Token {
     tokens: [..]Token;
 
-    line:    u32 = 1;
-    start:   s32;
-    next: s32;
+    line:  u32 = 1;
+    start: s32;
+    next:  s32;
 
     while next < source.count {
         char := source[next];

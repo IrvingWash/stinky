@@ -5,9 +5,9 @@ Config :: struct {
 make_config_from_arguments :: () -> error: string, Config {
     config: Config;
 
-    ti_config := cast(*Type_Info_Struct, type_info(Config));
-
     arguments := get_command_line_arguments(,, temp);
+
+    ti_config := cast(*Type_Info_Struct, type_info(Config));
 
     if ti_config.members.count > arguments.count - 1 {
         return "Too few arguments!", config;
