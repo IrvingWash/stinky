@@ -144,7 +144,9 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
 get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     expression: Model.Expression;
 
-    if tokens[current_index.*].type == {
+    starting_token := tokens[current_index.*];
+
+    if starting_token.type == {
         case .INTEGER;
             current_index.* += 1;
 
@@ -168,10 +170,10 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             }
 
             if (
-                current_index.* < tokens.count
-                &&  tokens[current_index.*].type != .R_PAREN
+                current_index.* >= tokens.count
+                || tokens[current_index.*].type != .R_PAREN
             ) {
-                return "Unterminated paren", -1;
+                return make_parsing_error("Unterminated paren", starting_token.line), -1;
             }
             current_index.* += 1;
 
@@ -180,12 +182,16 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
                 index = grouping_expression_index,
             };
         case;
-            return "Failed to parse primary expression", -1;
+            return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line), -1;
     }
 
     array_add(expressions, expression);
 
     return "", expressions.count - 1;
+}
+
+make_parsing_error :: (error: string, line_number: int) -> string {
+    return sprint("Parsing error on line %: %", line_number, error);
 }
 
 pretty_print_expression :: (ast: AST, index: int, depth: int, builder: *String_Builder) {

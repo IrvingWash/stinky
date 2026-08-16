@@ -109,7 +109,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                     next += 1;
 
                     if next >= source.count {
-                        return sprint("Unterminated string literal at line '%': '%'", line, make_lexeme(source, start, next)),
+                        return make_tokenizing_error(tprint("Unterminated string literal '%'", make_lexeme(source, start, next)), line),
                             tokens;
                     }
                 }
@@ -160,7 +160,8 @@ tokenize :: (source: string) -> error: string, [..]Token {
         }
 
         if token_type == .UNKNOWN {
-            return sprint("Unexpected token '%' at line %", lexeme, line), tokens;
+            return make_tokenizing_error(tprint("Unexpected token '%'", lexeme), line),
+                tokens;
         }
 
         array_add(
@@ -200,6 +201,10 @@ pretty_print_tokens :: (tokens: []Token) {
 
 make_lexeme :: (source: string, start: s32, last: s32) -> string {
     return string.{ last - start, *source[start] };
+}
+
+make_tokenizing_error :: (error: string, line_number: int) -> string {
+    return sprint("Tokenizing error on line %: %", line_number, error);
 }
 
 #import "Basic";
