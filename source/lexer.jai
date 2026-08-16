@@ -114,7 +114,10 @@ tokenize :: (source: string) -> error: string, [..]Token {
                     }
                 }
 
+                // Skip the opening quotes
+                lexeme = make_lexeme(source, start + 1, next);
                 next += 1;
+
                 token_type = .STRING;
             case;
                 if is_alpha(char) { // Identifiers and keywords
