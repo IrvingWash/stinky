@@ -1,3 +1,8 @@
+AST :: struct {
+    expressions: [..]Expression;
+    root_index:  int = -1;
+}
+
 Node :: struct {
     line_number: int;
 }
@@ -25,7 +30,7 @@ Integer :: struct {
 
 Float :: struct {
     #as using node: Node;
-    value: float;
+    value: float64;
 }
 
 Binary_Operator :: struct {

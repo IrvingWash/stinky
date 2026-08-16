@@ -1,10 +1,5 @@
-AST :: struct {
-    expressions: [..]Model.Expression;
-    root_index:  int = -1;
-}
-
-make_ast :: (tokens: []Token) -> error: string, AST {
-    ast: AST;
+make_ast :: (tokens: []Token) -> error: string, Model.AST {
+    ast: Model.AST;
 
     if tokens.count < 1 {
         return "Your stinky code doesn't contain any tokens, so we are unable to parse them, sorry!", ast;
@@ -16,12 +11,12 @@ make_ast :: (tokens: []Token) -> error: string, AST {
     return error, ast;
 }
 
-destroy_ast :: (ast: *AST) {
+destroy_ast :: (ast: *Model.AST) {
     array_free(ast.expressions);
     ast.* = {};
 }
 
-pretty_print_ast :: (ast: AST) {
+pretty_print_ast :: (ast: Model.AST) {
     builder: String_Builder;
 
     print(*builder, "AST: \n");
@@ -163,7 +158,7 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
 
             expression.kind = .FLOAT;
             expression._float = Model.Float.{
-                value = string_to_float(tokens[current_index.* - 1].lexeme),
+                value = string_to_float64(tokens[current_index.* - 1].lexeme),
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case .L_PAREN;
@@ -202,7 +197,7 @@ make_parsing_error :: (error: string, line_number: int) -> string {
     return sprint("Parsing error on line %: %", line_number, error);
 }
 
-pretty_print_expression :: (ast: AST, index: int, depth: int, builder: *String_Builder) {
+pretty_print_expression :: (ast: Model.AST, index: int, depth: int, builder: *String_Builder) {
     for 1..depth {
         print(builder, "    ");
     }

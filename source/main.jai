@@ -8,9 +8,10 @@
 #import "File";
 #import "Print_Color";
 
-Config :: #import,file "config.jai";
-Lexer  :: #import,file "lexer.jai";
-Parser :: #import,file "parser.jai";
+Config      :: #import,file "config.jai";
+Lexer       :: #import,file "lexer.jai";
+Parser      :: #import,file "parser.jai";
+Interpreter :: #import,file "interpreter.jai";
 
 main :: () {
     #if DEBUG {
@@ -63,6 +64,19 @@ main :: () {
     defer Parser.destroy_ast(*ast);
     #if DEBUG {
         Parser.pretty_print_ast(ast);
+    }
+
+    #if DEBUG {
+        print("================================================================================\n");
+        print("Running the interpreter...\n");
+        print("================================================================================\n");
+    }
+    error =, result := Interpreter.interpret(ast, ast.root_index);
+    if error {
+        terminate("Failed: %\n", error);
+    }
+    #if DEBUG {
+        print("%\n", result);
     }
 }
 
