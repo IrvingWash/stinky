@@ -114,7 +114,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             case .BOOL;
                                 return "", {
                                     kind = .STRING,
-                                    _string = tprint("%%", left._string, right.number),
+                                    _string = tprint("%%", left._string, right._bool),
                                 };
                             case .STRING;
                                 return "", {
