@@ -43,11 +43,42 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             kind = .NUMBER,
                             number = left.number + right.number,
                         };
-                    } else if left.kind == .STRING || right.kind == .STRING {
-                        return "", {
-                            kind = .STRING,
-                            _string = tprint("%%", left._string, right._string),
-                        };
+                    } else if left.kind == .STRING {
+                        if #complete right.kind == {
+                            case .NUMBER;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._string, right.number),
+                                };
+                            case .BOOL;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._string, right.number),
+                                };
+                            case .STRING;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._string, right._string),
+                                };
+                        }
+                    } else if right.kind == .STRING {
+                        if #complete left.kind == {
+                            case .NUMBER;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left.number, right._string),
+                                };
+                            case .BOOL;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._bool, right._string),
+                                };
+                            case .STRING;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._string, right._string),
+                                };
+                        }
                     } else {
                         return make_unsupported_operands_error("+", left.kind, right.kind, node.binary_operator.line_number),
                             {};
@@ -80,6 +111,26 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                         };
                     } else {
                         return make_unsupported_operands_error("/", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .MODULO;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .NUMBER,
+                            number = cast(float64, cast(int, left.number) % xx right.number),
+                        };
+                    } else {
+                        return make_unsupported_operands_error("%", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .CARET;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .NUMBER,
+                            number = pow(left.number, right.number),
+                        };
+                    } else {
+                        return make_unsupported_operands_error("^", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
             }
@@ -164,5 +215,6 @@ make_unsupported_operand_error :: (op: string, operand_type: Stinky_Type, line_n
 }
 
 #import "Basic";
+#import "Math";
 Model :: #import,file "model.jai";
 #import,file "token.jai";
