@@ -133,6 +133,86 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                         return make_unsupported_operands_error("^", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
+                case .GREATER;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number > right.number,
+                        };
+                    } else {
+                        return make_unsupported_operands_error(">", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .GREATER_EQUALS;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number >= right.number,
+                        };
+                    } else {
+                        return make_unsupported_operands_error(">=", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .LESS;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number < right.number,
+                        };
+                    } else {
+                        return make_unsupported_operands_error("<", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .LESS_EQUALS;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number <= right.number,
+                        };
+                    } else {
+                        return make_unsupported_operands_error("<=", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .EQUALS_EQUALS;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number == right.number,
+                        };
+                    } else if left.kind == .BOOL && right.kind == .BOOL {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left._bool == right._bool,
+                        };
+                    } else if left.kind == .STRING && right.kind == .STRING {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left._string == right._string,
+                        };
+                    } else {
+                        return make_unsupported_operands_error("==", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
+                case .NOT_EQUALS;
+                    if left.kind == .NUMBER && right.kind == .NUMBER {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left.number != right.number,
+                        };
+                    } else if left.kind == .BOOL && right.kind == .BOOL {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left._bool != right._bool,
+                        };
+                    } else if left.kind == .STRING && right.kind == .STRING {
+                        return "", {
+                            kind = .BOOL,
+                            _bool = left._string != right._string,
+                        };
+                    } else {
+                        return make_unsupported_operands_error("!=", left.kind, right.kind, node.binary_operator.line_number),
+                            {};
+                    }
             }
         case .UNARY_OPERATOR;
             error, operand := interpret(ast, node.unary_operator.operand_index);

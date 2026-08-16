@@ -4,7 +4,7 @@ A toy interpreted programming language made to learn how all of this works. This
 
 ## Usage
 ```bash
-stinky path_to_your_stinky_code.sy
+stinky path_to_your_stinky_code.sy --verbose
 ```
 
 ## File extension
