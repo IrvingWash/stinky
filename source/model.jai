@@ -1,3 +1,7 @@
+Node :: struct {
+    line_number: int;
+}
+
 Expression :: union kind: Expression_Kind {
     .INTEGER,,         integer:         Integer;
     .FLOAT,,           _float:          Float;
@@ -15,25 +19,30 @@ Expression_Kind :: enum {
 }
 
 Integer :: struct {
+    #as using node: Node;
     value: int;
 }
 
 Float :: struct {
+    #as using node: Node;
     value: float;
 }
 
 Binary_Operator :: struct {
+    #as using node: Node;
     op:        Token;
     lhs_index: int;
     rhs_index: int;
 }
 
 Unary_Operator :: struct {
+    #as using node: Node;
     op:            Token;
     operand_index: int;
 }
 
 Grouping :: struct {
+    #as using node: Node;
     index: int;
 }
 

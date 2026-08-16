@@ -56,6 +56,7 @@ get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model
         expression.binary_operator = Model.Binary_Operator.{
             lhs_index = lhs_index,
             op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
         };
         error, rhs_index := get_term(tokens, current_index, expressions);
         if error {
@@ -91,6 +92,7 @@ get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expre
         expression.binary_operator = Model.Binary_Operator.{
             lhs_index = lhs_index,
             op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
         };
         error, rhs_index := get_factor(tokens, current_index, expressions);
         if error {
@@ -124,6 +126,7 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
         expression.kind = .UNARY_OPERATOR;
         expression.unary_operator = Model.Unary_Operator.{
             op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
         };
         error, operand_index := get_unary(tokens, current_index, expressions);
         if error {
@@ -153,6 +156,7 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             expression.kind = .INTEGER;
             expression.integer = Model.Integer.{
                 value = string_to_int(tokens[current_index.* - 1].lexeme),
+                line_number = tokens[current_index.* - 1].line_number,
             };
         case .FLOAT;
             current_index.* += 1;
@@ -160,6 +164,7 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             expression.kind = .FLOAT;
             expression._float = Model.Float.{
                 value = string_to_float(tokens[current_index.* - 1].lexeme),
+                line_number = tokens[current_index.* - 1].line_number,
             };
         case .L_PAREN;
             current_index.* += 1;
@@ -181,6 +186,7 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             expression.kind = .GROUPING;
             expression.grouping = Model.Grouping.{
                 index = grouping_expression_index,
+                line_number = tokens[current_index.* - 1].line_number,
             };
         case;
             return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
