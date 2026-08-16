@@ -14,8 +14,6 @@ Lexer       :: #import,file "lexer.jai";
 Parser      :: #import,file "parser.jai";
 Interpreter :: #import,file "interpreter.jai";
 
-VERBOSE :: true;
-
 main :: () {
     #if DEBUG {
         defer report_memory_leaks();
@@ -34,7 +32,7 @@ main :: () {
         terminate("Failed to read '%'\n", config.file_path);
     }
     defer free(source);
-    #if VERBOSE {
+    if config.verbose {
         pretty_print_source(source);
     }
 
@@ -43,7 +41,7 @@ main :: () {
         terminate("Failed: %\n", error);
     }
     defer array_free(tokens);
-    #if VERBOSE {
+    if config.verbose {
         Lexer.pretty_print_tokens(tokens);
     }
 
@@ -52,7 +50,7 @@ main :: () {
         terminate("Failed: %\n", error);
     }
     defer Parser.destroy_ast(*ast);
-    #if VERBOSE {
+    if config.verbose {
         Parser.pretty_print_ast(ast);
     }
 
@@ -60,7 +58,7 @@ main :: () {
     if error {
         terminate("Failed: %\n", error);
     }
-    #if DEBUG {
+    if DEBUG {
         print("%\n", result);
     }
 }
@@ -93,7 +91,7 @@ pretty_print_source :: (source: string) {
 
     print(*builder, "\n");
 
-    print(builder_to_string(*builder));
+    print(builder_to_string(*builder,, temp));
 }
 
 setup_formatting :: () {
