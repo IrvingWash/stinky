@@ -13,6 +13,8 @@ Expression :: union kind: Expression_Kind {
     .BINARY_OPERATOR,, binary_operator: Binary_Operator;
     .UNARY_OPERATOR,,  unary_operator:  Unary_Operator;
     .GROUPING,,        grouping:        Grouping;
+    .BOOL,,            _bool:           Bool;
+    .STRING,,          _string:         String;
 }
 
 Expression_Kind :: enum {
@@ -21,6 +23,8 @@ Expression_Kind :: enum {
     BINARY_OPERATOR;
     UNARY_OPERATOR;
     GROUPING;
+    BOOL;
+    STRING;
 }
 
 Integer :: struct {
@@ -31,6 +35,16 @@ Integer :: struct {
 Float :: struct {
     #as using node: Node;
     value: float64;
+}
+
+Bool :: struct {
+    #as using node: Node;
+    value: bool;
+}
+
+String :: struct {
+    #as using node: Node;
+    value: string;
 }
 
 Binary_Operator :: struct {

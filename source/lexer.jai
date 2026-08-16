@@ -207,7 +207,7 @@ make_lexeme :: (source: string, start: s32, last: s32) -> string {
 }
 
 make_tokenizing_error :: (error: string, line_number: int) -> string {
-    return sprint("Tokenizing error on line %: %", line_number, error);
+    return tprint("Tokenizing error on line %: %", line_number, error);
 }
 
 #import "Basic";

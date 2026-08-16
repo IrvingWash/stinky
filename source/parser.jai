@@ -138,7 +138,7 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
     }
 }
 
-// <primary> ::= <integer> | <float> | '(' <expr> ')'
+// <primary> ::= <integer> | <float> | <bool> | <string> | '(' <expr> ')'
 get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     expression: Model.Expression;
 
@@ -159,6 +159,29 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
             expression.kind = .FLOAT;
             expression._float = Model.Float.{
                 value = string_to_float64(tokens[current_index.* - 1].lexeme),
+                line_number = tokens[current_index.* - 1].line_number,
+            };
+        case .TRUE;
+            current_index.* += 1;
+
+            expression.kind = .BOOL;
+            expression._bool = Model.Bool.{
+                value = true,
+                line_number = tokens[current_index.* - 1].line_number,
+            };
+        case .FALSE;
+            current_index.* += 1;
+
+            expression.kind = .BOOL;
+            expression._bool = Model.Bool.{
+                value = false,
+                line_number = tokens[current_index.* - 1].line_number,
+            };
+        case .STRING;
+            current_index.* += 1;
+            expression.kind = .STRING;
+            expression._string = Model.String.{
+                value = tokens[current_index.* - 1].lexeme,
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case .L_PAREN;
@@ -194,7 +217,7 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
 }
 
 make_parsing_error :: (error: string, line_number: int) -> string {
-    return sprint("Parsing error on line %: %", line_number, error);
+    return tprint("Parsing error on line %: %", line_number, error);
 }
 
 pretty_print_expression :: (ast: Model.AST, index: int, depth: int, builder: *String_Builder) {
@@ -204,11 +227,15 @@ pretty_print_expression :: (ast: Model.AST, index: int, depth: int, builder: *St
 
     expression := ast.expressions[index];
 
-    if expression.kind == {
+    if #complete expression.kind == {
         case .INTEGER;
             print(builder, "(%)\n", expression.integer.value);
         case .FLOAT;
             print(builder, "(%)\n", expression._float.value);
+        case .BOOL;
+            print(builder, "(%)\n", expression._bool.value);
+        case .STRING;
+            print(builder, "(\"%\")\n", expression._string.value);
         case .BINARY_OPERATOR;
             print(builder, "(%)\n", expression.binary_operator.op.lexeme);
             pretty_print_expression(ast, expression.binary_operator.lhs_index, depth + 1, builder);
