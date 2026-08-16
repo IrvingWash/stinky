@@ -1,3 +1,15 @@
+Stinky_Type :: enum {
+    NUMBER;
+    STRING;
+    BOOL;
+}
+
+Stinky_Value :: union kind: Stinky_Type {
+    .NUMBER,, number:  float64;
+    .STRING,, _string: string;
+    .BOOL,,   _bool:   bool;
+}
+
 interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
     node := ast.expressions[node_index];
 
@@ -309,18 +321,6 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
 
 
 #scope_file
-
-Stinky_Type :: enum {
-    NUMBER;
-    STRING;
-    BOOL;
-}
-
-Stinky_Value :: union kind: Stinky_Type {
-    .NUMBER,, number:  float64;
-    .STRING,, _string: string;
-    .BOOL,,   _bool:   bool;
-}
 
 make_unsupported_operands_error :: (op: string, lhs_type: Stinky_Type, rhs_type: Stinky_Type, line_number: int) -> string {
     return tprint(

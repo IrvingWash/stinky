@@ -7,12 +7,10 @@
 
 #import "File";
 #import "Print_Color";
-#import "String";
 
-Config      :: #import,file "config.jai";
-Lexer       :: #import,file "lexer.jai";
-Parser      :: #import,file "parser.jai";
-Interpreter :: #import,file "interpreter.jai";
+stinky :: #import "stinky"()(DEBUG);
+
+#load "config.jai";
 
 main :: () {
     #if DEBUG {
@@ -21,77 +19,25 @@ main :: () {
 
     setup_formatting();
 
-    error, config := Config.make_config_from_arguments();
+    error, config := make_config_from_arguments();
     if error {
         terminate("Failed: %\n", error);
     }
-    defer Config.destroy_config(config);
+    defer destroy_config(config);
 
     source, ok := read_entire_file(config.file_path);
     if !ok {
         terminate("Failed to read '%'\n", config.file_path);
     }
     defer free(source);
-    if config.verbose {
-        pretty_print_source(source);
-    }
 
-    error =, tokens := Lexer.tokenize(source);
-    if error {
-        terminate("Failed: %\n", error);
-    }
-    defer array_free(tokens);
-    if config.verbose {
-        Lexer.pretty_print_tokens(tokens);
-    }
-
-    error =, ast := Parser.make_ast(tokens);
-    if error {
-        terminate("Failed: %\n", error);
-    }
-    defer Parser.destroy_ast(*ast);
-    if config.verbose {
-        Parser.pretty_print_ast(ast);
-    }
-
-    error =, result := Interpreter.interpret(ast, ast.root_index);
-    if error {
-        terminate("Failed: %\n", error);
-    }
-    if DEBUG {
-        print("%\n", result);
-    }
+    stinky.run(source, config.verbose);
 }
 
 terminate :: (format_string: string, args: ..Any) {
     print_color(format_string, ..args, .RED, to_standard_error = true);
 
     exit(1);
-}
-
-pretty_print_source :: (source: string) {
-    UNIX_SEPARATOR :: "\n";
-    WINDOWS_SEPARATOR :: "\r\n";
-
-    #if OS == .WINDOWS {
-        separator := WINDOWS_SEPARATOR;
-    } else {
-        separator := UNIX_SEPARATOR;
-    }
-
-    lines := split(source, separator,, temp);
-
-    builder: String_Builder;
-
-    print(*builder, "=== Source ===\n");
-
-    for line: lines {
-        print(*builder, "% | %\n",  it_index + 1, line);
-    }
-
-    print(*builder, "\n");
-
-    print(builder_to_string(*builder,, temp));
 }
 
 setup_formatting :: () {

@@ -121,7 +121,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 token_type = .STRING;
             case;
                 if is_alpha(char) { // Identifiers and keywords
-                    while is_alnum(source[next]) {
+                    while next < source.count && is_alnum(source[next]) {
                         next += 1;
                     }
 
@@ -140,14 +140,14 @@ tokenize :: (source: string) -> error: string, [..]Token {
                         token_type = .IDENTIFIER;
                     }
                 } else if is_digit(char) { // Integers and floats
-                    while is_digit(source[next]) {
+                    while next < source.count && is_digit(source[next]) {
                         next += 1;
                     }
 
-                    if source[next] == #char "." {
+                    if next < source.count && source[next] == #char "." {
                         next += 1;
 
-                        while is_digit(source[next]) {
+                        while next < source.count && is_digit(source[next]) {
                             next += 1;
                         }
 

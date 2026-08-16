@@ -20,4 +20,13 @@ if ! jai -quiet ./build.jai - --debug; then
     exit 1
 fi
 
+# ==============================================================================
+# Test
+# ==============================================================================
+echo "Testing..."
+if ! jai -quiet ./test.jai; then
+    echo "❌ Commit blocked: Tests failed."
+    exit 1
+fi
+
 exit 0
