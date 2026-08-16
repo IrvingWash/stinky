@@ -173,7 +173,8 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
                 current_index.* >= tokens.count
                 || tokens[current_index.*].type != .R_PAREN
             ) {
-                return make_parsing_error("Unterminated paren", starting_token.line), -1;
+                return make_parsing_error("Unterminated paren", starting_token.line_number),
+                    -1;
             }
             current_index.* += 1;
 
@@ -182,7 +183,8 @@ get_primary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Ex
                 index = grouping_expression_index,
             };
         case;
-            return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line), -1;
+            return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
+                -1;
     }
 
     array_add(expressions, expression);

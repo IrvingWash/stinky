@@ -1,7 +1,7 @@
 Token :: struct {
-    type:   Token_Type;
-    lexeme: string;
-    line:   u32;
+    type:        Token_Type;
+    lexeme:      string;
+    line_number: u32;
 }
 
 Token_Type :: enum {

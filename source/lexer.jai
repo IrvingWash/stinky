@@ -5,7 +5,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
         return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"result := 69 + 420\"", tokens;
     }
 
-    line:  u32 = 1;
+    line_number:  u32 = 1;
     start: s32;
     next:  s32;
 
@@ -25,7 +25,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 continue;
 
             case #char "\n";
-                line += 1;
+                line_number += 1;
                 continue;
 
             case #char "-"; // Minus or comment
@@ -109,7 +109,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                     next += 1;
 
                     if next >= source.count {
-                        return make_tokenizing_error(tprint("Unterminated string literal '%'", make_lexeme(source, start, next)), line),
+                        return make_tokenizing_error(tprint("Unterminated string literal '%'", make_lexeme(source, start, next)), line_number),
                             tokens;
                     }
                 }
@@ -160,7 +160,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
         }
 
         if token_type == .UNKNOWN {
-            return make_tokenizing_error(tprint("Unexpected token '%'", lexeme), line),
+            return make_tokenizing_error(tprint("Unexpected token '%'", lexeme), line_number),
                 tokens;
         }
 
@@ -169,7 +169,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
             Token.{
                 token_type,
                 lexeme,
-                line,
+                line_number,
             }
         );
     }
