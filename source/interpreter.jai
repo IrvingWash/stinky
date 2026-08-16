@@ -26,37 +26,53 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
             error, result := interpret(ast, node.grouping.index);
             return error, result;
         case .LOGICAL_OPERATOR;
-            error, left := interpret(ast, node.logical_operator.lhs_index);
-            if error {
-                return error, {};
-            }
-
-            error =, right := interpret(ast, node.logical_operator.rhs_index);
-            if error {
-                return error, {};
-            }
-
-            if node.binary_operator.op.type == {
+            if node.logical_operator.op.type == {
                 case .AND;
-                    if left.kind == .BOOL && right.kind == .BOOL {
-                        return "", {
-                            kind = .BOOL,
-                            _bool = left._bool && right._bool,
-                        };
-                    } else {
-                        return make_unsupported_operands_error("and", left.kind, right.kind, node.binary_operator.line_number),
+                    error, left := interpret(ast, node.logical_operator.lhs_index);
+                    if error {
+                        return error, {};
+                    }
+                    if left.kind != .BOOL {
+                        return make_unsupported_operand_error("and", left.kind, node.logical_operator.line_number),
                             {};
                     }
+                    if left._bool == false {
+                        return "", left;
+                    }
+
+                    error =, right := interpret(ast, node.logical_operator.rhs_index);
+                    if error {
+                        return error, {};
+                    }
+                    if right.kind != .BOOL {
+                        return make_unsupported_operand_error("and", right.kind, node.logical_operator.line_number),
+                            {};
+                    }
+
+                    return "", right;
                 case .OR;
-                    if left.kind == .BOOL && right.kind == .BOOL {
-                        return "", {
-                            kind = .BOOL,
-                            _bool = left._bool || right._bool,
-                        };
-                    } else {
-                        return make_unsupported_operands_error("or", left.kind, right.kind, node.binary_operator.line_number),
+                    error, left := interpret(ast, node.logical_operator.lhs_index);
+                    if error {
+                        return error, {};
+                    }
+                    if left.kind != .BOOL {
+                        return make_unsupported_operand_error("or", left.kind, node.logical_operator.line_number),
                             {};
                     }
+                    if left._bool == true {
+                        return "", left;
+                    }
+
+                    error =, right := interpret(ast, node.logical_operator.rhs_index);
+                    if error {
+                        return error, {};
+                    }
+                    if right.kind != .BOOL {
+                        return make_unsupported_operand_error("or", right.kind, node.logical_operator.line_number),
+                            {};
+                    }
+
+                    return "", right;
             }
         case .BINARY_OPERATOR;
             error, left := interpret(ast, node.binary_operator.lhs_index);
