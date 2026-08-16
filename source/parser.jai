@@ -33,9 +33,86 @@ pretty_print_ast :: (ast: Model.AST) {
 #scope_file
 
 get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, index := get_addition(tokens, current_index, expressions);
+    error, index := get_equality(tokens, current_index, expressions);
 
     return error, index;
+}
+
+// <equality> ::= <comparison> (('~=' | '==') <comparison>)*
+get_equality :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_comparison(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && (
+            tokens[current_index.*].type == .EQUALS_EQUALS
+            || tokens[current_index.*].type == .NOT_EQUALS
+        )
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .BINARY_OPERATOR;
+        expression.binary_operator = Model.Binary_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+
+        error, rhs_index := get_comparison(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+
+        expression.binary_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
+}
+
+// <comparison> ::= <addition> (('>' | '>=' | '<' | '<=') <addition>)*
+get_comparison :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_addition(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && (
+            tokens[current_index.*].type == .GREATER
+            || tokens[current_index.*].type == .GREATER_EQUALS
+            || tokens[current_index.*].type == .LESS
+            || tokens[current_index.*].type == .LESS_EQUALS
+        )
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .BINARY_OPERATOR;
+        expression.binary_operator = Model.Binary_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+        error, rhs_index := get_addition(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+
+        expression.binary_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
 }
 
 // <addition> ::= <multiplication> (('+' | '-') <multiplication>)*
@@ -74,9 +151,9 @@ get_addition :: (tokens: []Token, current_index: *int, expressions: *[..]Model.E
     return "", lhs_index;
 }
 
-// <multiplication> ::= <unary> (('*' | '/') <unary>)*
+// <multiplication> ::= <modulo> (('*' | '/') <modulo>)*
 get_multiplication :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, lhs_index := get_unary(tokens, current_index, expressions);
+    error, lhs_index := get_modulo(tokens, current_index, expressions);
     if error {
         return error, -1;
     }
@@ -87,6 +164,39 @@ get_multiplication :: (tokens: []Token, current_index: *int, expressions: *[..]M
             tokens[current_index.*].type == .STAR
             || tokens[current_index.*].type == .SLASH
         )
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .BINARY_OPERATOR;
+        expression.binary_operator = Model.Binary_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+        error, rhs_index := get_modulo(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.binary_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
+}
+
+// <modulo> ::= <unary> ('%' <unary>)*
+get_modulo :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_unary(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && tokens[current_index.*].type == .MODULO
     ) {
         current_index.* += 1;
 
@@ -110,7 +220,7 @@ get_multiplication :: (tokens: []Token, current_index: *int, expressions: *[..]M
     return "", lhs_index;
 }
 
-// <unary> ::= ('+' | '-' | '~') <unary> | <primary>
+// <unary> ::= ('+' | '-' | '~')* <exponent>
 get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     if (
         tokens[current_index.*].type == .NOT
@@ -135,9 +245,42 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
 
         return "", expressions.count - 1;
     } else {
-        error, index := get_primary(tokens, current_index, expressions);
+        error, index := get_exponent(tokens, current_index, expressions);
         return error, index;
     }
+}
+
+// <exponent> ::= <primary> ('^' <primary>)*
+get_exponent :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_primary(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && tokens[current_index.*].type == .CARET
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .BINARY_OPERATOR;
+        expression.binary_operator = Model.Binary_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+        error, rhs_index := get_primary(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.binary_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
 }
 
 // <primary> ::= <integer> | <float> | <bool> | <string> | '(' <expr> ')'
