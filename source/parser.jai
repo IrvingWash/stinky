@@ -33,9 +33,75 @@ pretty_print_ast :: (ast: Model.AST) {
 #scope_file
 
 get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, index := get_equality(tokens, current_index, expressions);
+    error, index := get_logical_or(tokens, current_index, expressions);
 
     return error, index;
+}
+
+// <logical_or> ::= <logical_and> ('or' <logical_and>)*
+get_logical_or :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_logical_and(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && tokens[current_index.*].type == .OR
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .LOGICAL_OPERATOR;
+        expression.logical_operator = Model.Logical_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+        error, rhs_index := get_logical_and(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.logical_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
+};
+
+// <logical_and> ::= <equality> ('and' <equality>)*
+get_logical_and :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_equality(tokens, current_index, expressions);
+    if error {
+        return error, -1;
+    }
+
+    while (
+        current_index.* < tokens.count
+        && tokens[current_index.*].type == .AND
+    ) {
+        current_index.* += 1;
+
+        expression: Model.Expression;
+        expression.kind = .LOGICAL_OPERATOR;
+        expression.logical_operator = Model.Logical_Operator.{
+            lhs_index = lhs_index,
+            op = tokens[current_index.* - 1],
+            line_number = tokens[current_index.* - 1].line_number,
+        };
+        error, rhs_index := get_equality(tokens, current_index, expressions);
+        if error {
+            return error, -1;
+        }
+        expression.logical_operator.rhs_index = rhs_index;
+
+        array_add(expressions, expression);
+        lhs_index = expressions.count - 1;
+    }
+
+    return "", lhs_index;
 }
 
 // <equality> ::= <comparison> (('~=' | '==') <comparison>)*
@@ -385,6 +451,10 @@ pretty_print_expression :: (ast: Model.AST, index: int, depth: int, builder: *St
             print(builder, "(%)\n", expression.binary_operator.op.lexeme);
             pretty_print_expression(ast, expression.binary_operator.lhs_index, depth + 1, builder);
             pretty_print_expression(ast, expression.binary_operator.rhs_index, depth + 1, builder);
+        case .LOGICAL_OPERATOR;
+            print(builder, "(%)\n", expression.logical_operator.op.lexeme);
+            pretty_print_expression(ast, expression.logical_operator.lhs_index, depth + 1, builder);
+            pretty_print_expression(ast, expression.logical_operator.rhs_index, depth + 1, builder);
         case .UNARY_OPERATOR;
             print(builder, "(%)\n", expression.unary_operator.op.lexeme);
             pretty_print_expression(ast, expression.unary_operator.operand_index, depth + 1, builder);
