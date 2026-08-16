@@ -49,7 +49,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             _string = tprint("%%", left._string, right._string),
                         };
                     } else {
-                        return make_unsupported_operands_error("+", left.kind, right.kind),
+                        return make_unsupported_operands_error("+", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
                 case .MINUS;
@@ -59,7 +59,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             number = left.number - right.number,
                         };
                     } else {
-                        return make_unsupported_operands_error("-", left.kind, right.kind),
+                        return make_unsupported_operands_error("-", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
                 case .STAR;
@@ -69,7 +69,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             number = left.number * right.number,
                         };
                     } else {
-                        return make_unsupported_operands_error("*", left.kind, right.kind),
+                        return make_unsupported_operands_error("*", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
                 case .SLASH;
@@ -79,7 +79,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             number = left.number / right.number,
                         };
                     } else {
-                        return make_unsupported_operands_error("/", left.kind, right.kind),
+                        return make_unsupported_operands_error("/", left.kind, right.kind, node.binary_operator.line_number),
                             {};
                     }
             }
@@ -97,7 +97,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             number = +operand.number,
                         };
                     } else {
-                        return make_unsupported_operand_error("+", operand.kind),
+                        return make_unsupported_operand_error("+", operand.kind, node.unary_operator.line_number),
                             {};
                     }
                 case .MINUS;
@@ -107,7 +107,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             number = -operand.number,
                         };
                     } else {
-                        return make_unsupported_operand_error("-", operand.kind),
+                        return make_unsupported_operand_error("-", operand.kind, node.unary_operator.line_number),
                             {};
                     }
                 case .NOT;
@@ -117,7 +117,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                             _bool = !operand._bool,
                         };
                     } else {
-                        return make_unsupported_operand_error("~", operand.kind),
+                        return make_unsupported_operand_error("~", operand.kind, node.unary_operator.line_number),
                             {};
                     }
             }
@@ -142,12 +142,25 @@ Stinky_Value :: union kind: Stinky_Type {
     .BOOL,,   _bool:   bool;
 }
 
-make_unsupported_operands_error :: (op: string, lhs_type: Stinky_Type, rhs_type: Stinky_Type) -> string {
-    return tprint("You are using the '%' operator in your stinky code with '%' and '%', but '%' can't works with these types", op, lhs_type, rhs_type, op);
+make_unsupported_operands_error :: (op: string, lhs_type: Stinky_Type, rhs_type: Stinky_Type, line_number: int) -> string {
+    return tprint(
+        "Line %: You are using the '%' operator in your stinky code with '%' and '%', but '%' can't works with these types",
+        line_number,
+        op,
+        lhs_type,
+        rhs_type,
+        op,
+    );
 };
 
-make_unsupported_operand_error :: (op: string, operand_type: Stinky_Type) -> string {
-    return tprint("You are using the '%' operator in your stinky code with '%', but '%' can't works with that type", op, operand_type, op);
+make_unsupported_operand_error :: (op: string, operand_type: Stinky_Type, line_number: int) -> string {
+    return tprint(
+        "Line %: You are using the '%' operator in your stinky code with '%', but '%' can't works with that type",
+        line_number,
+        op,
+        operand_type,
+        op,
+    );
 }
 
 #import "Basic";

@@ -183,7 +183,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
 pretty_print_tokens :: (tokens: []Token) {
     builder: String_Builder;
 
-    print(*builder, "Tokens: \n");
+    print(*builder, "=== Tokens ===\n");
 
     for token: tokens {
         if it_index != tokens.count - 1 {
@@ -193,7 +193,7 @@ pretty_print_tokens :: (tokens: []Token) {
         }
     }
 
-    print(*builder, "\n");
+    print(*builder, "\n\n");
 
     print(builder_to_string(*builder,, temp));
 }

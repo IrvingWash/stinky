@@ -19,9 +19,11 @@ destroy_ast :: (ast: *Model.AST) {
 pretty_print_ast :: (ast: Model.AST) {
     builder: String_Builder;
 
-    print(*builder, "AST: \n");
+    print(*builder, "=== AST ===\n");
 
     pretty_print_expression(ast, ast.root_index, 0, *builder);
+
+    print(*builder, "\n");
 
     print(builder_to_string(*builder,, temp));
 }
