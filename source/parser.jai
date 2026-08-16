@@ -250,7 +250,7 @@ get_unary :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expr
     }
 }
 
-// <exponent> ::= <primary> ('^' <primary>)*
+// <exponent> ::= <primary> ('^' <exponent>)*
 get_exponent :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
     error, lhs_index := get_primary(tokens, current_index, expressions);
     if error {
@@ -270,7 +270,7 @@ get_exponent :: (tokens: []Token, current_index: *int, expressions: *[..]Model.E
             op = tokens[current_index.* - 1],
             line_number = tokens[current_index.* - 1].line_number,
         };
-        error, rhs_index := get_primary(tokens, current_index, expressions);
+        error, rhs_index := get_exponent(tokens, current_index, expressions);
         if error {
             return error, -1;
         }
