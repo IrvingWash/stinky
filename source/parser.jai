@@ -35,9 +35,15 @@ pretty_print_ast :: (ast: AST) {
 
 #scope_file
 
-// <expr> ::= <term> (('+' | '-') <term>)*
 get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, lhs_index := get_term(tokens, current_index, expressions);
+    error, index := get_addition(tokens, current_index, expressions);
+
+    return error, index;
+}
+
+// <addition> ::= <multiplication> (('+' | '-') <multiplication>)*
+get_addition :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_multiplication(tokens, current_index, expressions);
     if error {
         return error, -1;
     }
@@ -58,7 +64,7 @@ get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model
             op = tokens[current_index.* - 1],
             line_number = tokens[current_index.* - 1].line_number,
         };
-        error, rhs_index := get_term(tokens, current_index, expressions);
+        error, rhs_index := get_multiplication(tokens, current_index, expressions);
         if error {
             return error, -1;
         }
@@ -71,9 +77,9 @@ get_expression :: (tokens: []Token, current_index: *int, expressions: *[..]Model
     return "", lhs_index;
 }
 
-// <term> ::= <factor> (('*' | '/') <factor>)*
-get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, lhs_index := get_factor(tokens, current_index, expressions);
+// <multiplication> ::= <unary> (('*' | '/') <unary>)*
+get_multiplication :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
+    error, lhs_index := get_unary(tokens, current_index, expressions);
     if error {
         return error, -1;
     }
@@ -94,7 +100,7 @@ get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expre
             op = tokens[current_index.* - 1],
             line_number = tokens[current_index.* - 1].line_number,
         };
-        error, rhs_index := get_factor(tokens, current_index, expressions);
+        error, rhs_index := get_unary(tokens, current_index, expressions);
         if error {
             return error, -1;
         }
@@ -105,12 +111,6 @@ get_term :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expre
     }
 
     return "", lhs_index;
-}
-
-// <factor> ::= <unary>
-get_factor :: (tokens: []Token, current_index: *int, expressions: *[..]Model.Expression) -> error: string, int {
-    error, index := get_unary(tokens, current_index, expressions);
-    return error, index;
 }
 
 // <unary> ::= ('+' | '-' | '~') <unary> | <primary>
