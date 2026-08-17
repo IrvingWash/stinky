@@ -54,6 +54,8 @@ Token_Type :: enum {
     FUNC;
     NULL;
     END;
+    PRINT;
+    PRINTLN;
 }
 
 Keyword :: struct {
@@ -62,17 +64,19 @@ Keyword :: struct {
 }
 
 KEYWORDS :: Keyword.[
-    { "if",    .IF    },
-    { "then",  .THEN  },
-    { "else",  .ELSE  },
-    { "true",  .TRUE  },
-    { "false", .FALSE },
-    { "and",   .AND   },
-    { "or",    .OR    },
-    { "while", .WHILE },
-    { "do",    .DO    },
-    { "for",   .FOR   },
-    { "func",  .FUNC  },
-    { "null",  .NULL  },
-    { "end",   .END   },
+    { "if",      .IF      },
+    { "then",    .THEN    },
+    { "else",    .ELSE    },
+    { "true",    .TRUE    },
+    { "false",   .FALSE   },
+    { "and",     .AND     },
+    { "or",      .OR      },
+    { "while",   .WHILE   },
+    { "do",      .DO      },
+    { "for",     .FOR     },
+    { "func",    .FUNC    },
+    { "null",    .NULL    },
+    { "end",     .END     },
+    { "print",   .PRINT   },
+    { "println", .PRINTLN },
 ];

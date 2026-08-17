@@ -1,11 +1,25 @@
 AST :: struct {
-    expressions: [..]Expression;
-    root_index:  int = -1;
+    statements: Statements;
+    allocator:  Allocator;
 }
 
 Node :: struct {
     line_number: int;
 }
+
+Statements :: struct {
+    statements: [..]Statement;
+}
+
+Statement :: union kind: Statement_Kind {
+    #as using node: Node;
+    .PRINT,,      print_statement:   Print_Statement;
+    .PRINTLN,,    println_statement: Println_Statement;
+    .IF,,         if_statement:      If_Statement;
+    .ASSIGNMENT,, assignment:        Assignment;
+    .WHILE,,      while_statement:   While_Statement;
+    .FOR,,        for_statement:     For_Statement;
+};
 
 Expression :: union kind: Expression_Kind {
     .INTEGER,,          integer:          Integer;
@@ -16,6 +30,16 @@ Expression :: union kind: Expression_Kind {
     .GROUPING,,         grouping:         Grouping;
     .BOOL,,             _bool:            Bool;
     .STRING,,           _string:          String;
+    .IDENTIFIER,,       identifier:       Identifier;
+}
+
+Statement_Kind :: enum {
+    PRINT;
+    PRINTLN;
+    IF;
+    ASSIGNMENT;
+    WHILE;
+    FOR;
 }
 
 Expression_Kind :: enum {
@@ -27,6 +51,45 @@ Expression_Kind :: enum {
     GROUPING;
     BOOL;
     STRING;
+    IDENTIFIER;
+}
+
+Print_Statement :: struct {
+    #as using node: Node;
+    value: *Expression;
+}
+
+Println_Statement :: struct {
+    #as using node: Node;
+    value: *Expression;
+}
+
+If_Statement :: struct {
+    #as using node: Node;
+    test: *Expression;
+    then_statements: Statements;
+    else_statements: Statements;
+}
+
+Assignment :: struct {
+    #as using node: Node;
+    left:  *Expression;
+    right: *Expression;
+}
+
+While_Statement :: struct {
+    #as using node: Node;
+    test:       *Expression;
+    statements: Statements;
+}
+
+For_Statement :: struct {
+    #as using node: Node;
+    identifier: *Expression;
+    start:      *Expression;
+    end:        *Expression;
+    step:       *Expression;
+    statements: Statements;
 }
 
 Integer :: struct {
@@ -49,29 +112,34 @@ String :: struct {
     value: string;
 }
 
+Identifier :: struct {
+    #as using node: Node;
+    name: string;
+}
+
 Binary_Operator :: struct {
     #as using node: Node;
     op:        Token;
-    lhs_index: int;
-    rhs_index: int;
+    lhs: *Expression;
+    rhs: *Expression;
 }
 
 Logical_Operator :: struct {
     #as using node: Node;
-    op:        Token;
-    lhs_index: int;
-    rhs_index: int;
+    op:  Token;
+    lhs: *Expression;
+    rhs: *Expression;
 }
 
 Unary_Operator :: struct {
     #as using node: Node;
-    op:            Token;
-    operand_index: int;
+    op:      Token;
+    operand: *Expression;
 }
 
 Grouping :: struct {
     #as using node: Node;
-    index: int;
+    value: *Expression;
 }
 
 

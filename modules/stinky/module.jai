@@ -7,14 +7,14 @@ Lexer       :: #import,file "lexer.jai";
 Parser      :: #import,file "parser.jai";
 Interpreter :: #import,file "interpreter.jai";
 
-run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stinky_Value {
+run :: (source: string, verbose: bool) -> error: string {
     if verbose {
         pretty_print_source(source);
     }
 
     error, tokens := Lexer.tokenize(source);
     if error {
-        return tprint("Lexer error: %", error), {};
+        return tprint("Lexer error: %", error);
     }
     defer array_free(tokens);
     if verbose {
@@ -23,19 +23,19 @@ run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stin
 
     error =, ast := Parser.make_ast(tokens);
     if error {
-        return tprint("Parser error: %", error), {};
+        return tprint("Parser error: %", error);
     }
     defer Parser.destroy_ast(*ast);
     if verbose {
-        Parser.pretty_print_ast(ast);
+        print("%\n", ast);
     }
 
-    error =, result := Interpreter.interpret(ast, ast.root_index);
+    error = Interpreter.interpret(ast);
     if error {
-        return tprint("Runtime error: %", error), {};
+        return tprint("Runtime error: %", error);
     }
 
-    return "", result;
+    return "";
 }
 
 
