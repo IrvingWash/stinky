@@ -1,11 +1,21 @@
 AST :: struct {
-    expressions: [..]Expression;
-    root_index:  int = -1;
+    statements: Statements;
+    allocator:  Allocator;
 }
 
 Node :: struct {
     line_number: int;
 }
+
+Statements :: struct {
+    statements: [..]Statement;
+}
+
+Statement :: union kind: Statement_Kind {
+    #as using node: Node;
+    .PRINT,,   print_statement:   Print_Statement;
+    .PRINTLN,, println_statement: Println_Statement;
+};
 
 Expression :: union kind: Expression_Kind {
     .INTEGER,,          integer:          Integer;
@@ -18,6 +28,11 @@ Expression :: union kind: Expression_Kind {
     .STRING,,           _string:          String;
 }
 
+Statement_Kind :: enum {
+    PRINT;
+    PRINTLN;
+}
+
 Expression_Kind :: enum {
     INTEGER;
     FLOAT;
@@ -27,6 +42,16 @@ Expression_Kind :: enum {
     GROUPING;
     BOOL;
     STRING;
+}
+
+Print_Statement :: struct {
+    #as using node: Node;
+    value: *Expression;
+}
+
+Println_Statement :: struct {
+    #as using node: Node;
+    value: *Expression;
 }
 
 Integer :: struct {
@@ -52,26 +77,26 @@ String :: struct {
 Binary_Operator :: struct {
     #as using node: Node;
     op:        Token;
-    lhs_index: int;
-    rhs_index: int;
+    lhs: *Expression;
+    rhs: *Expression;
 }
 
 Logical_Operator :: struct {
     #as using node: Node;
-    op:        Token;
-    lhs_index: int;
-    rhs_index: int;
+    op:  Token;
+    lhs: *Expression;
+    rhs: *Expression;
 }
 
 Unary_Operator :: struct {
     #as using node: Node;
-    op:            Token;
-    operand_index: int;
+    op:      Token;
+    operand: *Expression;
 }
 
 Grouping :: struct {
     #as using node: Node;
-    index: int;
+    value: *Expression;
 }
 
 

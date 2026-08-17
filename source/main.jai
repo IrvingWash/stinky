@@ -26,8 +26,6 @@ main :: () {
     defer destroy_config(config);
 
     if config.repl {
-        print_color("stinky repl:\n\n", color = .BLUE, style = .UNDERLINE);
-
         run_repl();
     } else {
         source, ok := read_entire_file(config.file_path);
@@ -36,16 +34,16 @@ main :: () {
         }
         defer free(source);
 
-        error, value := stinky.run(source, config.verbose);
+        error := stinky.run(source, config.verbose);
         if error {
             terminate("Failed: %\n", error);
-        } else {
-            print("%\n", value);
         }
     }
 }
 
 run_repl :: () {
+    print_color("stinky repl:\n", color = .BLUE, style = .UNDERLINE);
+
     while true {
         buffer: [1024]u8;
 
@@ -54,14 +52,14 @@ run_repl :: () {
                 #import "POSIX";
                 #import "String";
 
+                print("\n");
+
                 fgets(buffer.data, buffer.count, stdin);
                 source := trim(to_string(buffer));
 
-                error, value := stinky.run(source, false);
+                error := stinky.run(source, false);
                 if error {
                     print_color("Failed: %\n", error, color =  .RED, to_standard_error = true);
-                } else {
-                    print("%\n", value);
                 }
             case;
                 terminate("Stinky REPL is not supported for your OS");

@@ -10,9 +10,54 @@ Stinky_Value :: union kind: Stinky_Type {
     .BOOL,,   _bool:   bool;
 }
 
-interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
-    node := ast.expressions[node_index];
+interpret :: (ast: Model.AST) -> error: string {
+    error := interpret_statements(ast.statements);
 
+    return error;
+}
+
+interpret_statements :: (statements: Model.Statements) -> error: string {
+    for node: statements.statements {
+        interprete_statement(node);
+    }
+
+    return "";
+}
+
+interprete_statement :: (node: Model.Statement) -> error: string {
+    if #complete node.kind == {
+        case .PRINT;
+            error, value := interpret_expression(node.print_statement.value);
+            if error {
+                return error;
+            }
+            if #complete value.kind == {
+                case .NUMBER;
+                    print("%", value.number);
+                case .STRING;
+                    print("%", value._string);
+                case .BOOL;
+                    print("%", value._bool);
+            }
+        case .PRINTLN;
+            error, value := interpret_expression(node.println_statement.value);
+            if error {
+                return error;
+            }
+            if #complete value.kind == {
+                case .NUMBER;
+                    print("%\n", value.number);
+                case .STRING;
+                    print("%\n", value._string);
+                case .BOOL;
+                    print("%\n", value._bool);
+            }
+    }
+
+    return "";
+}
+
+interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value {
     if #complete node.kind == {
         case .INTEGER;
             return "", {
@@ -35,12 +80,12 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                 _string = node._string.value,
             };
         case .GROUPING;
-            error, result := interpret(ast, node.grouping.index);
+            error, result := interpret_expression(node.grouping.value);
             return error, result;
         case .LOGICAL_OPERATOR;
             if node.logical_operator.op.type == {
                 case .AND;
-                    error, left := interpret(ast, node.logical_operator.lhs_index);
+                    error, left := interpret_expression(node.logical_operator.lhs);
                     if error {
                         return error, {};
                     }
@@ -52,7 +97,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                         return "", left;
                     }
 
-                    error =, right := interpret(ast, node.logical_operator.rhs_index);
+                    error =, right := interpret_expression(node.logical_operator.rhs);
                     if error {
                         return error, {};
                     }
@@ -63,7 +108,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
 
                     return "", right;
                 case .OR;
-                    error, left := interpret(ast, node.logical_operator.lhs_index);
+                    error, left := interpret_expression(node.logical_operator.lhs);
                     if error {
                         return error, {};
                     }
@@ -75,7 +120,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                         return "", left;
                     }
 
-                    error =, right := interpret(ast, node.logical_operator.rhs_index);
+                    error =, right := interpret_expression(node.logical_operator.rhs);
                     if error {
                         return error, {};
                     }
@@ -87,12 +132,12 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                     return "", right;
             }
         case .BINARY_OPERATOR;
-            error, left := interpret(ast, node.binary_operator.lhs_index);
+            error, left := interpret_expression(node.binary_operator.lhs);
             if error {
                 return error, {};
             }
 
-            error =, right := interpret(ast, node.binary_operator.rhs_index);
+            error =, right := interpret_expression(node.binary_operator.rhs);
             if error {
                 return error, {};
             }
@@ -276,7 +321,7 @@ interpret :: (ast: Model.AST, node_index: int) -> error: string, Stinky_Value {
                     }
             }
         case .UNARY_OPERATOR;
-            error, operand := interpret(ast, node.unary_operator.operand_index);
+            error, operand := interpret_expression(node.unary_operator.operand);
             if error {
                 return error, {};
             }
