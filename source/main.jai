@@ -36,7 +36,10 @@ main :: () {
         }
         defer free(source);
 
-        stinky.run(source, config.verbose);
+        error, value := stinky.run(source, config.verbose);
+        if error {
+            terminate("Failed: %\n", error);
+        }
     }
 }
 
@@ -48,10 +51,14 @@ run_repl :: () {
             case .LINUX;
                 #import "POSIX";
                 #import "String";
+
                 fgets(buffer.data, buffer.count, stdin);
                 source := trim(to_string(buffer));
 
-                stinky.run(source, false);
+                error, value := stinky.run(source, false);
+                if error {
+                    print_color("Failed: %\n", error, color =  .RED, to_standard_error = true);
+                }
         }
     }
 }

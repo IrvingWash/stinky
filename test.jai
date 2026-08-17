@@ -284,9 +284,9 @@ run_tests :: () -> has_failures: bool {
 
         if test.failures.count > 0 {
             failed_test_count += 1;
-            print_color("% - %:\n", test_no, test.description, color = .RED, style = .BOLD);
+            print_color("% - %:\n", test_no, test.description, color = .RED, style = .BOLD, to_standard_error = true);
             for failure: test.failures {
-                print_color("    %\n", failure, color = .RED);
+                print_color("    %\n", failure, color = .RED, to_standard_error = true);
             }
         } else if test.warnings.count > 0 {
             warned_test_count += 1;
@@ -304,7 +304,7 @@ run_tests :: () -> has_failures: bool {
         print_color("% tests with warnings\n", warned_test_count, color = .YELLOW, style = .UNDERLINE);
     }
     if failed_test_count > 0 {
-        print_color("% tests failed\n", failed_test_count, color = .RED, style = .UNDERLINE);
+        print_color("% tests failed\n", failed_test_count, color = .RED, style = .UNDERLINE, to_standard_error = true);
     }
 
     return failed_test_count != 0;

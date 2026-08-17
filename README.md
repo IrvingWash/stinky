@@ -3,6 +3,8 @@
 A toy interpreted programming language made to learn how all of this works. This is an implementation of the [Pinky language](https://pinky-lang.org/)
 
 ## Usage
+
+### With a stinky file as input
 ```sy
 -- Evaluate a simple expression
 -- path_to_your_stinky_code.sy
@@ -12,6 +14,11 @@ A toy interpreted programming language made to learn how all of this works. This
 
 ```bash
 stinky path_to_your_stinky_code.sy --verbose
+```
+
+### As a REPL
+```bash
+stinky
 ```
 
 ## File extension

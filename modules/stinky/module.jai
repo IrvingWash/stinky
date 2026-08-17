@@ -1,7 +1,6 @@
 #module_parameters()(DEBUG: bool = false);
 
 #import "Basic";
-#import "Print_Color";
 #import "String";
 
 Lexer       :: #import,file "lexer.jai";
@@ -15,7 +14,7 @@ run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stin
 
     error, tokens := Lexer.tokenize(source);
     if error {
-        terminate("Failed: %\n", error);
+        return tprint("Lexer error: %", error), {};
     }
     defer array_free(tokens);
     if verbose {
@@ -24,7 +23,7 @@ run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stin
 
     error =, ast := Parser.make_ast(tokens);
     if error {
-        terminate("Failed: %\n", error);
+        return tprint("Parser error: %", error), {};
     }
     defer Parser.destroy_ast(*ast);
     if verbose {
@@ -33,24 +32,18 @@ run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stin
 
     error =, result := Interpreter.interpret(ast, ast.root_index);
     if error {
-        terminate("Failed: %\n", error);
+        return tprint("Runtime error: %", error), {};
     }
     if DEBUG {
         print("%\n", result);
     }
 
-    return error, result;
+    return "", result;
 }
 
 
 
 #scope_file
-
-terminate :: (format_string: string, args: ..Any) {
-    print_color(format_string, ..args, .RED, to_standard_error = true);
-
-    exit(1);
-}
 
 pretty_print_source :: (source: string) {
     UNIX_SEPARATOR :: "\n";
