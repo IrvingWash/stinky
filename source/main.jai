@@ -25,13 +25,35 @@ main :: () {
     }
     defer destroy_config(config);
 
-    source, ok := read_entire_file(config.file_path);
-    if !ok {
-        terminate("Failed to read '%'\n", config.file_path);
-    }
-    defer free(source);
+    if config.repl {
+        print_color("stinky repl:\n\n", color = .BLUE, style = .UNDERLINE);
 
-    stinky.run(source, config.verbose);
+        run_repl();
+    } else {
+        source, ok := read_entire_file(config.file_path);
+        if !ok {
+            terminate("Failed to read '%'\n", config.file_path);
+        }
+        defer free(source);
+
+        stinky.run(source, config.verbose);
+    }
+}
+
+run_repl :: () {
+    while true {
+        buffer: [1024]u8;
+
+        #if OS == {
+            case .LINUX;
+                #import "POSIX";
+                #import "String";
+                fgets(buffer.data, buffer.count, stdin);
+                source := trim(to_string(buffer));
+
+                stinky.run(source, false);
+        }
+    }
 }
 
 terminate :: (format_string: string, args: ..Any) {

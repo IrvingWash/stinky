@@ -1,4 +1,5 @@
 Config :: struct {
+    repl: bool;
     file_path: string;
     verbose: bool;
 }
@@ -14,7 +15,9 @@ make_config_from_arguments :: () -> error: string, Config {
 
     // File path
     if arguments.count < 1 {
-        return "You need to specify the path to your stinky code file", config;
+        config.repl = true;
+
+        return "", config;
     }
 
     config.file_path = copy_string(arguments[0]);
