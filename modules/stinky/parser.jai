@@ -72,10 +72,10 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
         case .IF;
             error, statement := get_if_statement(tokens, current_index);
             return error, statement;
-        /*
         case .WHILE;
             error, statement := get_while_statement(tokens, current_index);
             return error, statement;
+        /*
         case .FOR;
             error, statement := get_for_statement(tokens, current_index);
             return error, statement;
@@ -171,16 +171,10 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
         return error, .{};
     }
 
-    // Check for THEN token
-    if current_index.* >= tokens.count {
-        return make_parsing_error("Expected a stinky then statemen, but reached the end of the file", peek_pointer(tokens).line_number),
-            .{};
+    error = try_to_consume_then_token(tokens, current_index);
+    if error {
+        return error, .{};
     }
-    if tokens[current_index.*].type != .THEN {
-        return make_parsing_error("Expected a stinky then statement", tokens[current_index.*].line_number),
-            .{};
-    }
-    current_index.* += 1;
 
     // Get then statements
     error =, then_statements := get_statements(tokens, current_index);
@@ -199,16 +193,10 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
         }
     }
 
-    // Check for END token
-    if current_index.* >= tokens.count {
-        return make_parsing_error("Expected a stinky end statement, but reached the end of the file", peek_pointer(tokens).line_number),
-            .{};
+    error = try_to_consume_end_token(tokens, current_index);
+    if error {
+        return error, .{};
     }
-    if tokens[current_index.*].type != .END {
-        return make_parsing_error("Expected a stinky end statement", tokens[current_index.*].line_number),
-            .{};
-    }
-    current_index.* += 1;
 
     statement: Model.Statement;
     statement.kind = .IF;
@@ -216,6 +204,52 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
     statement.if_statement.then_statements = then_statements;
     statement.if_statement.else_statements = else_statements;
     statement.if_statement.line_number = line_number;
+
+    return "", statement;
+}
+
+// <while_statement> ::= 'while' <expression> 'then' <statement>* 'end'
+get_while_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
+    // Check wor WHILE token
+    if current_index.* >= tokens.count {
+        return make_parsing_error("Expected a stinky while statement, but reached the end of the file", peek_pointer(tokens).line_number),
+            .{};
+    }
+    if tokens[current_index.*].type != .WHILE {
+        return make_parsing_error("Expected a stinky while statement", tokens[current_index.*].line_number),
+            .{};
+    }
+    current_index.* += 1;
+
+    line_number := tokens[current_index.* - 1].line_number;
+
+    // Get test expression
+    error, test := get_expression(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error = try_to_consume_then_token(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    // Get while statements
+    error =, while_statements := get_statements(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error = try_to_consume_end_token(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    statement: Model.Statement;
+    statement.kind = .WHILE;
+    statement.while_statement.test = test;
+    statement.while_statement.statements = while_statements;
+    statement.while_statement.line_number = line_number;
 
     return "", statement;
 }
@@ -616,6 +650,32 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
     }
 
     return "", expression;
+}
+
+try_to_consume_then_token :: (tokens: []Token, current_index: *int) -> error: string {
+    if current_index.* >= tokens.count {
+        return make_parsing_error("Expected a stinky then statemen, but reached the end of the file", peek_pointer(tokens).line_number);
+    }
+    if tokens[current_index.*].type != .THEN {
+        return make_parsing_error("Expected a stinky then statement", tokens[current_index.*].line_number);
+    }
+
+    current_index.* += 1;
+
+    return "";
+}
+
+try_to_consume_end_token :: (tokens: []Token, current_index: *int) -> error: string {
+    if current_index.* >= tokens.count {
+        return make_parsing_error("Expected a stinky end statement, but reached the end of the file", peek_pointer(tokens).line_number);
+    }
+    if tokens[current_index.*].type != .END {
+        return make_parsing_error("Expected a stinky end statement", tokens[current_index.*].line_number);
+    }
+
+    current_index.* += 1;
+
+    return "";
 }
 
 make_parsing_error :: (error: string, line_number: int) -> string {

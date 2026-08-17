@@ -17,6 +17,7 @@ Statement :: union kind: Statement_Kind {
     .PRINTLN,,    println_statement: Println_Statement;
     .IF,,         if_statement:      If_Statement;
     .ASSIGNMENT,, assignment:        Assignment;
+    .WHILE,,      while_statement:   While_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -36,6 +37,7 @@ Statement_Kind :: enum {
     PRINTLN;
     IF;
     ASSIGNMENT;
+    WHILE;
 }
 
 Expression_Kind :: enum {
@@ -71,6 +73,12 @@ Assignment :: struct {
     #as using node: Node;
     left:  *Expression;
     right: *Expression;
+}
+
+While_Statement :: struct {
+    #as using node: Node;
+    test:       *Expression;
+    statements: Statements;
 }
 
 Integer :: struct {

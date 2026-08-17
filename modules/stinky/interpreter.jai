@@ -114,7 +114,7 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
             }
 
             if test.kind != .BOOL {
-                return "Expected a stinky if test to evaluate to a bool";
+                return tprint("Line %: Expected a stinky if test to evaluate to a bool", node.if_statement.line_number);
             }
 
             if test._bool == true {
@@ -139,6 +139,26 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
             }
             _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
             set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
+        case .WHILE;
+            while true {
+                error, test := interpret_expression(node.while_statement.test, environment);
+                if error {
+                    return error;
+                }
+
+                if test.kind != .BOOL {
+                    return tprint("Line: %: Expected a stinky while test to evaluate to a bool", node.while_statement.line_number);
+                }
+
+                if test._bool == false {
+                    break;
+                }
+
+                error = interpret_statements(node.while_statement.statements, *new_environment(environment));
+                if error {
+                    return error;
+                }
+            }
     }
 
     return "";
