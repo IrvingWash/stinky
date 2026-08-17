@@ -39,6 +39,8 @@ main :: () {
         error, value := stinky.run(source, config.verbose);
         if error {
             terminate("Failed: %\n", error);
+        } else {
+            print("%\n", value);
         }
     }
 }
@@ -58,7 +60,11 @@ run_repl :: () {
                 error, value := stinky.run(source, false);
                 if error {
                     print_color("Failed: %\n", error, color =  .RED, to_standard_error = true);
+                } else {
+                    print("%\n", value);
                 }
+            case;
+                terminate("Stinky REPL is not supported for your OS");
         }
     }
 }

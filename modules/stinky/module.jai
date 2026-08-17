@@ -34,9 +34,6 @@ run :: (source: string, verbose: bool) -> error: string, value: Interpreter.Stin
     if error {
         return tprint("Runtime error: %", error), {};
     }
-    if DEBUG {
-        print("%\n", result);
-    }
 
     return "", result;
 }
