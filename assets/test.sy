@@ -1,9 +1,15 @@
 -- This is a comment
 
-println 1 + 2
+-- println 1 + 2
+
+-- println("test" + 42)
+
+-- print "hello\n\nworld"
 
 println 3 * 2^2
 
-println("test" + 42)
-
-print "hello\n\nworld"
+if false then
+    println "yes!"
+else 
+    println "no!"
+end

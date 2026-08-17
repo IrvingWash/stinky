@@ -52,6 +52,27 @@ interprete_statement :: (node: Model.Statement) -> error: string {
                 case .BOOL;
                     print("%\n", value._bool);
             }
+        case .IF;
+            error, test := interpret_expression(node.if_statement.test);
+            if error {
+                return error;
+            }
+
+            if test.kind != .BOOL {
+                return "Expected a stinky if test to evaluate to a bool";
+            }
+
+            if test._bool == true {
+                error = interpret_statements(node.if_statement.then_statements);
+                if error {
+                    return error;
+                }
+            } else {
+                error = interpret_statements(node.if_statement.else_statements);
+                if error {
+                    return error;
+                }
+            }
     }
 
     return "";

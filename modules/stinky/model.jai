@@ -15,6 +15,7 @@ Statement :: union kind: Statement_Kind {
     #as using node: Node;
     .PRINT,,   print_statement:   Print_Statement;
     .PRINTLN,, println_statement: Println_Statement;
+    .IF,,      if_statement:      If_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -31,6 +32,7 @@ Expression :: union kind: Expression_Kind {
 Statement_Kind :: enum {
     PRINT;
     PRINTLN;
+    IF;
 }
 
 Expression_Kind :: enum {
@@ -52,6 +54,13 @@ Print_Statement :: struct {
 Println_Statement :: struct {
     #as using node: Node;
     value: *Expression;
+}
+
+If_Statement :: struct {
+    #as using node: Node;
+    test: *Expression;
+    then_statements: Statements;
+    else_statements: Statements;
 }
 
 Integer :: struct {
