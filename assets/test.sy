@@ -1,15 +1,19 @@
--- This is a comment
+println "Step: 2"
+for i := 1, 10, 2 do
+    println i
+end
 
--- println 1 + 2
+println "Step: 1"
+for i := 1, 10 do
+    println i
+end
 
--- println("test" + 42)
+println "Backwards step: -1"
+for i := 10, 1 do
+    println i
+end
 
--- print "hello\n\nworld"
-
--- println 3 * 2^2
-
-i := 1
-while i <= 10 then
-    println "i = " + i
-    i := i + 1
+println "Backwards step: -2"
+for i := 10, 1, -2 do
+    println i
 end

@@ -18,6 +18,7 @@ Statement :: union kind: Statement_Kind {
     .IF,,         if_statement:      If_Statement;
     .ASSIGNMENT,, assignment:        Assignment;
     .WHILE,,      while_statement:   While_Statement;
+    .FOR,,        for_statement:     For_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -38,6 +39,7 @@ Statement_Kind :: enum {
     IF;
     ASSIGNMENT;
     WHILE;
+    FOR;
 }
 
 Expression_Kind :: enum {
@@ -78,6 +80,15 @@ Assignment :: struct {
 While_Statement :: struct {
     #as using node: Node;
     test:       *Expression;
+    statements: Statements;
+}
+
+For_Statement :: struct {
+    #as using node: Node;
+    identifier: *Expression;
+    start:      *Expression;
+    end:        *Expression;
+    step:       *Expression;
     statements: Statements;
 }
 

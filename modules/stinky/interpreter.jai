@@ -147,7 +147,7 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
                 }
 
                 if test.kind != .BOOL {
-                    return tprint("Line: %: Expected a stinky while test to evaluate to a bool", node.while_statement.line_number);
+                    return tprint("Line %: Expected a stinky while test to evaluate to a bool", node.while_statement.line_number);
                 }
 
                 if test._bool == false {
@@ -159,12 +159,90 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
                     return error;
                 }
             }
+        case .FOR;
+            error, iterator := interpret_expression(node.for_statement.start, environment);
+            if error {
+                return error;
+            }
+            if iterator.kind != .NUMBER {
+                return tprint("Line %: Expected a stinky for loop iterator to be a number", node.for_statement.line_number);
+            }
+
+            error =, end := interpret_expression(node.for_statement.end, environment);
+            if error {
+                return error;
+            }
+            if end.kind != .NUMBER {
+                return tprint("Line %: Expected a stinky for loop end to be a number", node.for_statement.line_number);
+            }
+
+            if iterator.number < end.number {
+                step: float64;
+                if node.for_statement.step == null {
+                    step = 1;
+                } else {
+                    error, stinky_step := interpret_expression(node.for_statement.step, environment);
+                    if error {
+                        return error;
+                    }
+                    if stinky_step.kind != .NUMBER {
+                        return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
+                    }
+
+                    step = stinky_step.number;
+                }
+
+                while iterator.number <= end.number {
+                    set_variable_into_environment(
+                        node.for_statement.identifier.identifier.name,
+                        iterator,
+                        environment,
+                    );
+
+                    error := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    if error {
+                        return error;
+                    }
+
+                    iterator.number += step;
+                }
+            } else {
+                step: float64;
+                if node.for_statement.step == null {
+                    step = -1;
+                } else {
+                    error, stinky_step := interpret_expression(node.for_statement.step, environment);
+                    if error {
+                        return error;
+                    }
+                    if stinky_step.kind != .NUMBER {
+                        return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
+                    }
+
+                    step = stinky_step.number;
+                }
+
+                while iterator.number >= end.number {
+                    set_variable_into_environment(
+                        node.for_statement.identifier.identifier.name,
+                        iterator,
+                        environment,
+                    );
+
+                    error := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    if error {
+                        return error;
+                    }
+
+                    iterator.number += step;
+                }
+            }
     }
 
     return "";
 }
 
-interpret_expression :: (node: Model.Expression, environment: *Environment) -> error: string, Stinky_Value {
+interpret_expression :: (node: *Model.Expression, environment: *Environment) -> error: string, Stinky_Value {
     if #complete node.kind == {
         case .IDENTIFIER;
             ok, value := get_variable_from_environment(node.identifier.name, environment);
