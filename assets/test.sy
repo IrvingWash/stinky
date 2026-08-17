@@ -6,10 +6,21 @@
 
 -- print "hello\n\nworld"
 
-println 3 * 2^2
+-- println 3 * 2^2
 
-if 2^2 == 4 then
-    println "Indeed: 2^2 == 4"
+age := 17
+age := age + 1
+
+println "The value of global variable 'age' is " + age
+
+println "Checking the age:"
+if age >= 18 then
+    is_cool := true
+    println "Adult (" + age + ")"
 else
-    println "Somehow, 2^2 ~= 4"
+    -- This should error because is_cool was declared in a different scope
+    println "Youngster (" + age + ") and is ~" + is_cool + " cool"
+    age := age - 1
 end
+
+println "age is now " + age

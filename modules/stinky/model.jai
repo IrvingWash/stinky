@@ -13,9 +13,10 @@ Statements :: struct {
 
 Statement :: union kind: Statement_Kind {
     #as using node: Node;
-    .PRINT,,   print_statement:   Print_Statement;
-    .PRINTLN,, println_statement: Println_Statement;
-    .IF,,      if_statement:      If_Statement;
+    .PRINT,,      print_statement:   Print_Statement;
+    .PRINTLN,,    println_statement: Println_Statement;
+    .IF,,         if_statement:      If_Statement;
+    .ASSIGNMENT,, assignment:        Assignment;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -27,12 +28,14 @@ Expression :: union kind: Expression_Kind {
     .GROUPING,,         grouping:         Grouping;
     .BOOL,,             _bool:            Bool;
     .STRING,,           _string:          String;
+    .IDENTIFIER,,       identifier:       Identifier;
 }
 
 Statement_Kind :: enum {
     PRINT;
     PRINTLN;
     IF;
+    ASSIGNMENT;
 }
 
 Expression_Kind :: enum {
@@ -44,6 +47,7 @@ Expression_Kind :: enum {
     GROUPING;
     BOOL;
     STRING;
+    IDENTIFIER;
 }
 
 Print_Statement :: struct {
@@ -61,6 +65,12 @@ If_Statement :: struct {
     test: *Expression;
     then_statements: Statements;
     else_statements: Statements;
+}
+
+Assignment :: struct {
+    #as using node: Node;
+    left:  *Expression;
+    right: *Expression;
 }
 
 Integer :: struct {
@@ -81,6 +91,11 @@ Bool :: struct {
 String :: struct {
     #as using node: Node;
     value: string;
+}
+
+Identifier :: struct {
+    #as using node: Node;
+    name: string;
 }
 
 Binary_Operator :: struct {

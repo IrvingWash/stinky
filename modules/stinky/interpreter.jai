@@ -1,3 +1,23 @@
+interpret :: (ast: Model.AST) -> error: string {
+    environment: Environment;
+    defer deinit(*environment.variables);
+
+    error := interpret_statements(ast.statements, *environment);
+
+    return error;
+}
+
+
+
+#scope_file
+
+Environment :: struct {
+    variables: Table(string, Stinky_Value);
+    parent:    *Environment;
+
+    variables.allocator = temp; // @Todo: maybe we can come up with something more interesting
+}
+
 Stinky_Type :: enum {
     NUMBER;
     STRING;
@@ -10,24 +30,59 @@ Stinky_Value :: union kind: Stinky_Type {
     .BOOL,,   _bool:   bool;
 }
 
-interpret :: (ast: Model.AST) -> error: string {
-    error := interpret_statements(ast.statements);
+new_environment :: (environment: *Environment) -> Environment {
+    new: Environment;
+    new.parent = environment;
 
-    return error;
+    return new;
 }
 
-interpret_statements :: (statements: Model.Statements) -> error: string {
+get_variable_from_environment :: (name: string, environment: *Environment) -> ok: bool, Stinky_Value {
+    if environment == null {
+        return false, .{};
+    }
+
+    ok, value := table_find(*environment.variables, name);
+    if !ok {
+        ok, value = get_variable_from_environment(name, environment.parent);
+    }
+
+    return ok, value;
+}
+
+set_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
+    // Traverse parents to set the variable if it is in a outer scope
+    current := environment;
+    while current != null {
+        does_contain := table_contains(*current.variables, name);
+        if does_contain {
+            table_set(*current.variables, name, value);
+
+            return;
+        } else {
+            current = current.parent;
+        }
+    }
+
+    // Set in the original scope if we didn't find the variable
+    table_set(*environment.variables, name, value);
+}
+
+interpret_statements :: (statements: Model.Statements, environment: *Environment) -> error: string {
     for node: statements.statements {
-        interprete_statement(node);
+        error := interprete_statement(node, environment);
+        if error {
+            return error;
+        }
     }
 
     return "";
 }
 
-interprete_statement :: (node: Model.Statement) -> error: string {
+interprete_statement :: (node: Model.Statement, environment: *Environment) -> error: string {
     if #complete node.kind == {
         case .PRINT;
-            error, value := interpret_expression(node.print_statement.value);
+            error, value := interpret_expression(node.print_statement.value, environment);
             if error {
                 return error;
             }
@@ -40,7 +95,7 @@ interprete_statement :: (node: Model.Statement) -> error: string {
                     print("%", value._bool);
             }
         case .PRINTLN;
-            error, value := interpret_expression(node.println_statement.value);
+            error, value := interpret_expression(node.println_statement.value, environment);
             if error {
                 return error;
             }
@@ -53,7 +108,7 @@ interprete_statement :: (node: Model.Statement) -> error: string {
                     print("%\n", value._bool);
             }
         case .IF;
-            error, test := interpret_expression(node.if_statement.test);
+            error, test := interpret_expression(node.if_statement.test, environment);
             if error {
                 return error;
             }
@@ -63,23 +118,42 @@ interprete_statement :: (node: Model.Statement) -> error: string {
             }
 
             if test._bool == true {
-                error = interpret_statements(node.if_statement.then_statements);
+                error = interpret_statements(node.if_statement.then_statements, *new_environment(environment));
                 if error {
                     return error;
                 }
             } else {
-                error = interpret_statements(node.if_statement.else_statements);
+                error = interpret_statements(node.if_statement.else_statements, *new_environment(environment));
                 if error {
                     return error;
                 }
             }
+        case .ASSIGNMENT;
+            error, right := interpret_expression(node.assignment.right, environment);
+            if error {
+                return error;
+            }
+
+            if node.assignment.left.kind != .IDENTIFIER {
+                return tprint("Line: %: Expected the left side of the assignment to be an identifier", node.assignment.line_number);
+            }
+            _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
+            set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
     }
 
     return "";
 }
 
-interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value {
+interpret_expression :: (node: Model.Expression, environment: *Environment) -> error: string, Stinky_Value {
     if #complete node.kind == {
+        case .IDENTIFIER;
+            ok, value := get_variable_from_environment(node.identifier.name, environment);
+            if !ok {
+                return tprint("Line %: Undeclared identifier '%'", node.identifier.line_number, node.identifier.name),
+                    .{};
+            }
+
+            return "", value;
         case .INTEGER;
             return "", {
                 kind = .NUMBER,
@@ -101,12 +175,12 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
                 _string = node._string.value,
             };
         case .GROUPING;
-            error, result := interpret_expression(node.grouping.value);
+            error, result := interpret_expression(node.grouping.value, environment);
             return error, result;
         case .LOGICAL_OPERATOR;
             if node.logical_operator.op.type == {
                 case .AND;
-                    error, left := interpret_expression(node.logical_operator.lhs);
+                    error, left := interpret_expression(node.logical_operator.lhs, environment);
                     if error {
                         return error, {};
                     }
@@ -118,7 +192,7 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
                         return "", left;
                     }
 
-                    error =, right := interpret_expression(node.logical_operator.rhs);
+                    error =, right := interpret_expression(node.logical_operator.rhs, environment);
                     if error {
                         return error, {};
                     }
@@ -129,7 +203,7 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
 
                     return "", right;
                 case .OR;
-                    error, left := interpret_expression(node.logical_operator.lhs);
+                    error, left := interpret_expression(node.logical_operator.lhs, environment);
                     if error {
                         return error, {};
                     }
@@ -141,7 +215,7 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
                         return "", left;
                     }
 
-                    error =, right := interpret_expression(node.logical_operator.rhs);
+                    error =, right := interpret_expression(node.logical_operator.rhs, environment);
                     if error {
                         return error, {};
                     }
@@ -153,12 +227,12 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
                     return "", right;
             }
         case .BINARY_OPERATOR;
-            error, left := interpret_expression(node.binary_operator.lhs);
+            error, left := interpret_expression(node.binary_operator.lhs, environment);
             if error {
                 return error, {};
             }
 
-            error =, right := interpret_expression(node.binary_operator.rhs);
+            error =, right := interpret_expression(node.binary_operator.rhs, environment);
             if error {
                 return error, {};
             }
@@ -342,7 +416,7 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
                     }
             }
         case .UNARY_OPERATOR;
-            error, operand := interpret_expression(node.unary_operator.operand);
+            error, operand := interpret_expression(node.unary_operator.operand, environment);
             if error {
                 return error, {};
             }
@@ -384,10 +458,6 @@ interpret_expression :: (node: Model.Expression) -> error: string, Stinky_Value 
     return "Somehow your stinky code had a node that is unknown for the interpreter", {};
 }
 
-
-
-#scope_file
-
 make_unsupported_operands_error :: (op: string, lhs_type: Stinky_Type, rhs_type: Stinky_Type, line_number: int) -> string {
     return tprint(
         "Line %: You are using the '%' operator in your stinky code with '%' and '%', but '%' can't works with these types",
@@ -411,5 +481,6 @@ make_unsupported_operand_error :: (op: string, operand_type: Stinky_Type, line_n
 
 #import "Basic";
 #import "Math";
+#import "Hash_Table";
 Model :: #import,file "model.jai";
 #import,file "token.jai";

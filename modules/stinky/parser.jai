@@ -84,7 +84,29 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
             return error, statement;
         */
         case;
-            return make_parsing_error(tprint("Not a stinky statement: %", tokens[current_index.*].lexeme), tokens[current_index.*].line_number), .{};
+            error, left := get_expression(tokens, current_index);
+            if error {
+                return error, .{};
+            }
+            if tokens[current_index.*].type == .ASSIGN {
+                current_index.* += 1;
+
+                error, right := get_expression(tokens, current_index);
+                if error {
+                    return error, .{};
+                }
+
+                assignment: Model.Statement;
+                assignment.kind = .ASSIGNMENT;
+                assignment.assignment.left = left;
+                assignment.assignment.right = right;
+                assignment.line_number = tokens[current_index.* - 1].line_number;
+
+                return "", assignment;
+            }
+
+            return make_parsing_error(tprint("Not a stinky statement: %", tokens[current_index.*].lexeme), tokens[current_index.*].line_number),
+                .{};
     }
 }
 
@@ -508,7 +530,7 @@ get_exponent :: (tokens: []Token, current_index: *int) -> error: string, *Model.
     return "", lhs;
 }
 
-// <primary> ::= <integer> | <float> | <bool> | <string> | '(' <expr> ')'
+// <primary> ::= <integer> | <float> | <bool> | <string> | <identifier> | '(' <expr> ')'
 get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.Expression {
     expression := New(Model.Expression);
 
@@ -557,6 +579,13 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
             expression.kind = .STRING;
             expression._string = Model.String.{
                 value = tokens[current_index.* - 1].lexeme,
+                line_number = tokens[current_index.* - 1].line_number,
+            };
+        case .IDENTIFIER;
+            current_index.* += 1;
+            expression.kind = .IDENTIFIER;
+            expression.identifier = Model.Identifier.{
+                name = tokens[current_index.* - 1].lexeme,
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case .L_PAREN;
