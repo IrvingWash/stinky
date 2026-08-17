@@ -1,5 +1,6 @@
-println "Step: 2"
-for i := 1, 10, 2 do
+step := 2
+println "Step: " + step
+for i := 1, 10, step do
     println i
 end
 
@@ -9,11 +10,12 @@ for i := 1, 10 do
 end
 
 println "Backwards step: -1"
-for i := 10, 1 do
+for i := 10, 1, -1 do
     println i
 end
 
-println "Backwards step: -2"
-for i := 10, 1, -2 do
+step := -2
+println "Backwards step: " + step
+for i := 10, 1, step do
     println i
 end

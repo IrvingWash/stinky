@@ -176,22 +176,22 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
                 return tprint("Line %: Expected a stinky for loop end to be a number", node.for_statement.line_number);
             }
 
-            if iterator.number < end.number {
-                step: float64;
-                if node.for_statement.step == null {
-                    step = 1;
-                } else {
-                    error, stinky_step := interpret_expression(node.for_statement.step, environment);
-                    if error {
-                        return error;
-                    }
-                    if stinky_step.kind != .NUMBER {
-                        return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
-                    }
-
-                    step = stinky_step.number;
+            step: float64;
+            if node.for_statement.step == null {
+                step = 1;
+            } else {
+                error, stinky_step := interpret_expression(node.for_statement.step, environment);
+                if error {
+                    return error;
+                }
+                if stinky_step.kind != .NUMBER {
+                    return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
                 }
 
+                step = stinky_step.number;
+            }
+
+            if iterator.number < end.number {
                 while iterator.number <= end.number {
                     set_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
@@ -207,21 +207,6 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
                     iterator.number += step;
                 }
             } else {
-                step: float64;
-                if node.for_statement.step == null {
-                    step = -1;
-                } else {
-                    error, stinky_step := interpret_expression(node.for_statement.step, environment);
-                    if error {
-                        return error;
-                    }
-                    if stinky_step.kind != .NUMBER {
-                        return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
-                    }
-
-                    step = stinky_step.number;
-                }
-
                 while iterator.number >= end.number {
                     set_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
