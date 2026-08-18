@@ -25,45 +25,15 @@ main :: () {
     }
     defer destroy_config(config);
 
-    if config.repl {
-        run_repl();
-    } else {
-        source, ok := read_entire_file(config.file_path);
-        if !ok {
-            terminate("Failed to read '%'\n", config.file_path);
-        }
-        defer free(source);
-
-        error := stinky.run(source, config.verbose);
-        if error {
-            terminate("Failed: %\n", error);
-        }
+    source, ok := read_entire_file(config.file_path);
+    if !ok {
+        terminate("Failed to read '%'\n", config.file_path);
     }
-}
+    defer free(source);
 
-run_repl :: () {
-    print_color("stinky repl:\n", color = .BLUE, style = .UNDERLINE);
-
-    while true {
-        buffer: [1024]u8;
-
-        #if OS == {
-            case .LINUX;
-                #import "POSIX";
-                #import "String";
-
-                print("\n");
-
-                fgets(buffer.data, buffer.count, stdin);
-                source := trim(to_string(buffer));
-
-                error := stinky.run(source, false);
-                if error {
-                    print_color("Failed: %\n", error, color =  .RED, to_standard_error = true);
-                }
-            case;
-                terminate("Stinky REPL is not supported for your OS");
-        }
+    error = stinky.run(source, config.verbose);
+    if error {
+        terminate("Failed: %\n", error);
     }
 }
 

@@ -1,5 +1,4 @@
 Config :: struct {
-    repl: bool;
     file_path: string;
     verbose: bool;
 }
@@ -14,12 +13,6 @@ make_config_from_arguments :: () -> error: string, Config {
     arguments := array_view(get_command_line_arguments(,, temp), 1);
 
     // File path
-    if arguments.count < 1 {
-        config.repl = true;
-
-        return "", config;
-    }
-
     config.file_path = copy_string(arguments[0]);
 
     // Flags

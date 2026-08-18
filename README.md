@@ -4,7 +4,6 @@ A toy interpreted programming language made to learn how all of this works. This
 
 ## Usage
 
-### With a stinky file as input
 ```sy
 age := 17
 age := age + 1
@@ -24,11 +23,6 @@ end
 
 ```bash
 stinky path_to_your_stinky_code.sy --verbose
-```
-
-### As a REPL
-```bash
-stinky
 ```
 
 ## File extension
