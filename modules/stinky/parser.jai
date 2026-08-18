@@ -384,11 +384,18 @@ get_function_declaration :: (tokens: []Token, current_index: *int) -> error: str
 
 // <parameters> ::= <identifier> (',' <identifier>)*
 get_parameters :: (tokens: []Token, current_index: *int) -> error: string, [..]Model.Statement {
+    MAX_PARAMS_COUNT :: 255;
+
     parameters: [..]Model.Statement;
     while current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
+        if parameters.count >= MAX_PARAMS_COUNT {
+            return make_parsing_error("Too many parameters", tokens[current_index.*].line_number),
+                parameters;
+        }
+
         name := tokens[current_index.*];
         if name.type != .IDENTIFIER {
-            return make_parsing_error("Expected an identifier", tokens[current_index.* - 1].line_number),
+            return make_parsing_error("Expected an identifier", tokens[current_index.*].line_number),
                 parameters;
         }
         current_index.* += 1;
