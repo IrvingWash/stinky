@@ -65,6 +65,14 @@ set_variable_into_environment :: (name: string, value: Stinky_Value, environment
         return;
     }
 
+    table_set(*environment.variables, name, value);
+}
+
+update_or_set_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
+    if environment == null {
+        return;
+    }
+
     // Traverse parents to set the variable if it is in a outer scope
     current := environment;
     while current != null {
@@ -200,7 +208,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                     .{};
             }
             _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
-            set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
+            update_or_set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
         case .WHILE;
             while true {
                 error, test := interpret_expression(node.while_statement.test, environment);
@@ -262,7 +270,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
 
             if iterator.number < end.number {
                 while iterator.number <= end.number {
-                    set_variable_into_environment(
+                    update_or_set_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
                         iterator,
                         environment,
@@ -280,7 +288,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                 }
             } else {
                 while iterator.number >= end.number {
-                    set_variable_into_environment(
+                    update_or_set_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
                         iterator,
                         environment,
