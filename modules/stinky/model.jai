@@ -18,6 +18,7 @@ Statement :: union kind: Statement_Kind {
     .FUNCTION_DECLARATION,,    function_declaration:    Function_Declaration;
     .PARAMETER_DECLARATION,,   parameter_declaration:   Parameter_Declaration;
     .FUNCTION_CALL_STATEMENT,, function_call_statement: Function_Call_Statement;
+    .RETURN_STATEMENT,,        return_statement:        Return_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -43,6 +44,7 @@ Statement_Kind :: enum {
     FUNCTION_DECLARATION;
     PARAMETER_DECLARATION;
     FUNCTION_CALL_STATEMENT;
+    RETURN_STATEMENT;
 }
 
 Expression_Kind :: enum {
@@ -60,12 +62,12 @@ Expression_Kind :: enum {
 
 Print_Statement :: struct {
     #as using node: Node;
-    value: *Expression;
+    expression: *Expression;
 }
 
 Println_Statement :: struct {
     #as using node: Node;
-    value: *Expression;
+    expression: *Expression;
 }
 
 If_Statement :: struct {
@@ -106,6 +108,11 @@ Function_Declaration :: struct {
 Parameter_Declaration :: struct {
     #as using node: Node;
     name: string;
+}
+
+Return_Statement :: struct {
+    #as using node: Node;
+    expression: *Expression;
 }
 
 Function_Call :: struct {
@@ -166,7 +173,7 @@ Unary_Operator :: struct {
 
 Grouping :: struct {
     #as using node: Node;
-    value: *Expression;
+    expression: *Expression;
 }
 
 

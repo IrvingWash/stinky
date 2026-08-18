@@ -22,12 +22,14 @@ Environment :: struct {
 }
 
 Stinky_Type :: enum {
+    NONE;
     NUMBER;
     STRING;
     BOOL;
 }
 
 Stinky_Value :: union kind: Stinky_Type {
+    .NONE,,   none:    void;
     .NUMBER,, number:  float64;
     .STRING,, _string: string;
     .BOOL,,   _bool:   bool;
@@ -101,34 +103,42 @@ set_function_into_environment :: (name: string, value: Stinky_Function, environm
     table_set(*environment.functions, name, value);
 }
 
-interpret_statements :: (statements: [..]Model.Statement, environment: *Environment) -> error: string {
+interpret_statements :: (statements: [..]Model.Statement, environment: *Environment) -> error: string, value: Stinky_Value {
     for node: statements {
-        error := interpret_statement(node, environment);
+        error, value := interpret_statement(node, environment);
+        if value.kind != .NONE {
+            return "", value;
+        }
         if error {
-            return error;
+            return error, .{};;
         }
     }
 
-    return "";
+    return "", .{};
 }
 
-interpret_statement :: (node: Model.Statement, environment: *Environment) -> error: string {
+interpret_statement :: (node: Model.Statement, environment: *Environment) -> error: string, value: Stinky_Value {
     if #complete node.kind == {
+        case .RETURN_STATEMENT;
+            error, value := interpret_expression(node.return_statement.expression, environment);
+            return error, value;
         case .FUNCTION_DECLARATION;
             set_function_into_environment(node.function_declaration.name, { node.function_declaration, environment }, environment);
         case .PARAMETER_DECLARATION;
             // Do nothing
         case .FUNCTION_CALL_STATEMENT;
-            error := interpret_expression(node.function_call_statement.expression, environment);
+            error, value := interpret_expression(node.function_call_statement.expression, environment);
             if error {
-                return error;
+                return error, value ;
             }
         case .PRINT;
-            error, value := interpret_expression(node.print_statement.value, environment);
+            error, value := interpret_expression(node.print_statement.expression, environment);
             if error {
-                return error;
+                return error, .{};
             }
             if #complete value.kind == {
+                case .NONE;
+                    print("NONE");
                 case .NUMBER;
                     print("%", value.number);
                 case .STRING;
@@ -137,11 +147,13 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                     print("%", value._bool);
             }
         case .PRINTLN;
-            error, value := interpret_expression(node.println_statement.value, environment);
+            error, value := interpret_expression(node.println_statement.expression, environment);
             if error {
-                return error;
+                return error, .{};
             }
             if #complete value.kind == {
+                case .NONE;
+                    print("NONE\n");
                 case .NUMBER;
                     print("%\n", value.number);
                 case .STRING;
@@ -152,32 +164,40 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
         case .IF;
             error, test := interpret_expression(node.if_statement.test, environment);
             if error {
-                return error;
+                return error, .{};
             }
 
             if test.kind != .BOOL {
-                return tprint("Line %: Expected a stinky if test to evaluate to a bool", node.if_statement.line_number);
+                return tprint("Line %: Expected a stinky if test to evaluate to a bool", node.if_statement.line_number),
+                    .{};
             }
 
             if test._bool == true {
-                error = interpret_statements(node.if_statement.then_statements, *new_environment(environment));
+                error =, value := interpret_statements(node.if_statement.then_statements, *new_environment(environment));
                 if error {
-                    return error;
+                    return error, .{};
+                }
+                if value.kind != .NONE {
+                    return "", value;
                 }
             } else {
-                error = interpret_statements(node.if_statement.else_statements, *new_environment(environment));
+                error =, value := interpret_statements(node.if_statement.else_statements, *new_environment(environment));
                 if error {
-                    return error;
+                    return error, .{};
+                }
+                if value.kind != .NONE {
+                    return "", value;
                 }
             }
         case .ASSIGNMENT;
             error, right := interpret_expression(node.assignment.right, environment);
             if error {
-                return error;
+                return error, .{};
             }
 
             if node.assignment.left.kind != .IDENTIFIER {
-                return tprint("Line: %: Expected the left side of the assignment to be an identifier", node.assignment.line_number);
+                return tprint("Line: %: Expected the left side of the assignment to be an identifier", node.assignment.line_number),
+                    .{};
             }
             _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
             set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
@@ -185,37 +205,43 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
             while true {
                 error, test := interpret_expression(node.while_statement.test, environment);
                 if error {
-                    return error;
+                    return error, {};
                 }
 
                 if test.kind != .BOOL {
-                    return tprint("Line %: Expected a stinky while test to evaluate to a bool", node.while_statement.line_number);
+                    return tprint("Line %: Expected a stinky while test to evaluate to a bool", node.while_statement.line_number),
+                        .{};
                 }
 
                 if test._bool == false {
                     break;
                 }
 
-                error = interpret_statements(node.while_statement.statements, *new_environment(environment));
+                error =, value := interpret_statements(node.while_statement.statements, *new_environment(environment));
                 if error {
-                    return error;
+                    return error, .{};
+                }
+                if value.kind != .NONE {
+                    return "", value;
                 }
             }
         case .FOR;
             error, iterator := interpret_expression(node.for_statement.start, environment);
             if error {
-                return error;
+                return error, .{};
             }
             if iterator.kind != .NUMBER {
-                return tprint("Line %: Expected a stinky for loop iterator to be a number", node.for_statement.line_number);
+                return tprint("Line %: Expected a stinky for loop iterator to be a number", node.for_statement.line_number),
+                    .{};
             }
 
             error =, end := interpret_expression(node.for_statement.end, environment);
             if error {
-                return error;
+                return error, .{};
             }
             if end.kind != .NUMBER {
-                return tprint("Line %: Expected a stinky for loop end to be a number", node.for_statement.line_number);
+                return tprint("Line %: Expected a stinky for loop end to be a number", node.for_statement.line_number),
+                    .{};
             }
 
             step: float64;
@@ -224,10 +250,11 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
             } else {
                 error, stinky_step := interpret_expression(node.for_statement.step, environment);
                 if error {
-                    return error;
+                    return error, .{};
                 }
                 if stinky_step.kind != .NUMBER {
-                    return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number);
+                    return tprint("Line %: Expected a stinky for loop step to be a number", node.for_statement.line_number),
+                        .{};
                 }
 
                 step = stinky_step.number;
@@ -241,9 +268,12 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                         environment,
                     );
 
-                    error := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    error, value := interpret_statements(node.for_statement.statements, *new_environment(environment));
                     if error {
-                        return error;
+                        return error, .{};
+                    }
+                    if value.kind != .NONE {
+                        return "", value;
                     }
 
                     iterator.number += step;
@@ -256,9 +286,12 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                         environment,
                     );
 
-                    error := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    error, value := interpret_statements(node.for_statement.statements, *new_environment(environment));
                     if error {
-                        return error;
+                        return error, .{};
+                    }
+                    if value.kind != .NONE {
+                        return "", value;
                     }
 
                     iterator.number += step;
@@ -266,7 +299,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
             }
     }
 
-    return "";
+    return "", .{};
 }
 
 interpret_expression :: (node: *Model.Expression, environment: *Environment) -> error: string, Stinky_Value {
@@ -299,12 +332,12 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
                 set_variable_into_environment(parameter.parameter_declaration.name, arguments[it_index], *function_environment);
             }
 
-            error := interpret_statements(function.declaration.statements, *function_environment);
+            error, value := interpret_statements(function.declaration.statements, *function_environment);
             if error {
                 return error, .{};
             }
 
-            return "", .{};
+            return "", value;
         case .IDENTIFIER;
             ok, value := get_variable_from_environment(node.identifier.name, environment);
             if !ok {
@@ -334,7 +367,7 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
                 _string = node._string.value,
             };
         case .GROUPING;
-            error, result := interpret_expression(node.grouping.value, environment);
+            error, result := interpret_expression(node.grouping.expression, environment);
             return error, result;
         case .LOGICAL_OPERATOR;
             if node.logical_operator.op.type == {
@@ -405,6 +438,11 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
                         };
                     } else if left.kind == .STRING {
                         if #complete right.kind == {
+                            case .NONE;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left._string, right.none),
+                                };
                             case .NUMBER;
                                 return "", {
                                     kind = .STRING,
@@ -423,6 +461,11 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
                         }
                     } else if right.kind == .STRING {
                         if #complete left.kind == {
+                            case .NONE;
+                                return "", {
+                                    kind = .STRING,
+                                    _string = tprint("%%", left.none, right._string),
+                                };
                             case .NUMBER;
                                 return "", {
                                     kind = .STRING,

@@ -56,6 +56,7 @@ Token_Type :: enum {
     END;
     PRINT;
     PRINTLN;
+    RETURN;
 }
 
 Keyword :: struct {
@@ -79,4 +80,5 @@ KEYWORDS :: Keyword.[
     { "end",     .END     },
     { "print",   .PRINT   },
     { "println", .PRINTLN },
+    { "ret",     .RETURN  },
 ];

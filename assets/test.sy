@@ -5,12 +5,24 @@ func factorial(n)
     end
 
     func print_stuff(stuff)
+        print "From inside the function: "
         println stuff
     end
 
     print_stuff("The factorial of " + n + " is " + mul)
+
+    for temp := 0, 1 do
+        if true then
+            ret mul
+        end
+    end
+
+    println "I'm should not be seen"
 end
 
 we_want := 5
 
-factorial(we_want)
+result := factorial(we_want)
+
+print "From the function call: "
+println result

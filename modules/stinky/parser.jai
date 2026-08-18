@@ -51,6 +51,7 @@ get_program :: (tokens: []Token, current_index: *int) -> error: string, [..]Mode
     return error, statements;
 }
 
+// <statements> ::= <statement>*
 get_statements :: (tokens: []Token, current_index: *int) -> error: string, [..]Model.Statement {
     statements: [..]Model.Statement;
 
@@ -73,6 +74,17 @@ get_statements :: (tokens: []Token, current_index: *int) -> error: string, [..]M
     return "", statements;
 }
 
+/*
+<statement> ::= <print>
+    | <println>
+    | <if_statement>
+    | <while_statement>
+    | <for_statement>
+    | <function_declaration>
+    | <return_statement>
+    | <assignment>
+    | <functiona_call_statement>
+*/
 get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
     if tokens[current_index.*].type == {
         case .PRINT;
@@ -92,6 +104,9 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
             return error, statement;
         case .FUNC;
             error, statement := get_function_declaration(tokens, current_index);
+            return error, statement;
+        case .RETURN;
+            error, statement := get_return_statement(tokens, current_index);
             return error, statement;
         case;
             error, left := get_expression(tokens, current_index);
@@ -137,7 +152,7 @@ get_print_statement :: (tokens: []Token, current_index: *int) -> error: string, 
         statement: Model.Statement;
         statement.kind = .PRINT;
         statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.value = expression;
+        statement.print_statement.expression = expression;
 
         return "", statement;
     }
@@ -157,7 +172,7 @@ get_println_statement :: (tokens: []Token, current_index: *int) -> error: string
         statement: Model.Statement;
         statement.kind = .PRINTLN;
         statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.value = expression;
+        statement.print_statement.expression = expression;
 
         return "", statement;
     }
@@ -380,6 +395,26 @@ get_function_declaration :: (tokens: []Token, current_index: *int) -> error: str
     statement.function_declaration.statements = statements;
 
     return "", statement;
+}
+
+// <return_statement> ::= 'return' <expression>
+get_return_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
+    error := try_to_consume_token(.RETURN, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error =, expression := get_expression(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    return_statement: Model.Statement;
+    return_statement.kind = .RETURN_STATEMENT;
+    return_statement.return_statement.line_number = tokens[current_index.* - 1].line_number;
+    return_statement.return_statement.expression = expression;
+
+    return "", return_statement;
 }
 
 // <parameters> ::= <identifier> (',' <identifier>)*
@@ -789,7 +824,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
         case .IDENTIFIER;
             current_index.* += 1;
 
-            if tokens[current_index.*].type == .L_PAREN {  // It's a function call
+            if current_index.* < tokens.count && tokens[current_index.*].type == .L_PAREN {  // It's a function call
                 current_index.* += 1;
                 name := tokens[current_index.* - 2].lexeme;
 
@@ -835,7 +870,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
 
             expression.kind = .GROUPING;
             expression.grouping = Model.Grouping.{
-                value = grouping_expression,
+                expression = grouping_expression,
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case;
@@ -896,10 +931,10 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
     if #complete statement.kind == {
         case .PRINT;
             print(builder, "(print)\n");
-            pretty_print_expression(builder, statement.print_statement.value, depth + 1);
+            pretty_print_expression(builder, statement.print_statement.expression, depth + 1);
         case .PRINTLN;
             print(builder, "(println)\n");
-            pretty_print_expression(builder, statement.println_statement.value, depth + 1);
+            pretty_print_expression(builder, statement.println_statement.expression, depth + 1);
         case .IF;
             print(builder, "(if)\n");
             pretty_print_expression(builder, statement.if_statement.test, depth + 1);
@@ -941,6 +976,9 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
         case .FUNCTION_CALL_STATEMENT;
             print(builder, "(func call)\n");
             pretty_print_expression(builder, statement.function_call_statement.expression, depth + 1);
+        case .RETURN_STATEMENT;
+            print(builder, "(return)\n");
+            pretty_print_expression(builder, statement.return_statement.expression, depth + 1);
     }
 }
 
@@ -975,7 +1013,7 @@ pretty_print_expression :: (builder: *String_Builder, expression: *Model.Express
             pretty_print_expression(builder, expression.unary_operator.operand, depth + 1);
         case .GROUPING;
             print(builder, "(())\n");
-            pretty_print_expression(builder, expression.grouping.value, depth + 1);
+            pretty_print_expression(builder, expression.grouping.expression, depth + 1);
         case .BOOL;
             print(builder, "(%)\n", expression._bool.value);
         case .STRING;
