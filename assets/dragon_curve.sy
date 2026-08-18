@@ -2,6 +2,13 @@ angle := 0
 x := 25
 y := 60
 
+func main()
+  println("gcolor 900")
+  println("glinewidth 0.5")
+
+  dragon(60, 12, 1)
+end
+
 func dragon(size, level, d)
   if level == 0 then
     x := x - cos(angle) * size
@@ -54,4 +61,4 @@ func sin(a)
   ret value
 end
 
-dragon(60, 12, 1)
+main()
