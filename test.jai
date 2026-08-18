@@ -258,6 +258,34 @@ tests: [..]Test;
         }
     );
 
+    add_test(
+        "Early return",
+        (test: *Test) {
+            source := #string STINKY
+age := 17
+age := age + 1
+
+func check_age(age)
+    if age >= 18 then
+        ret true
+    else
+        ret false
+    end
+
+    return 32
+end
+
+ret check_age(age)
+            STINKY
+
+            error, result := stinky.run(source, false);
+
+            expect_is_null(test, error);
+            expect_are_equal(test, result.kind, .BOOL);
+            expect_are_equal(test, result._bool, true);
+        }
+    );
+
     has_failures := run_tests();
 
     array_free(tests);
