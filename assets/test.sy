@@ -1,16 +1,7 @@
-x := 0
+num := 999
 
-func foo(n)
-    local x := 999
-    i := 1
-    while i < n do
-        local x := -1
-        println x
-        i := i + 1
-    end
-    println x
+for num := 1, 10, 1 do
+    println num
 end
 
-foo(6)
-
-println x
+println num

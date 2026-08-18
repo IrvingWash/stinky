@@ -280,15 +280,16 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                 step = stinky_step.number;
             }
 
+            loop_environment := new_environment(environment);
             if iterator.number < end.number {
                 while iterator.number <= end.number {
-                    update_or_set_variable_into_environment_recursively(
+                    set_local_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
                         iterator,
-                        environment,
+                        *loop_environment,
                     );
 
-                    error, value := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    error, value := interpret_statements(node.for_statement.statements, *loop_environment);
                     if error {
                         return error, .{};
                     }
@@ -300,13 +301,13 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                 }
             } else {
                 while iterator.number >= end.number {
-                    update_or_set_variable_into_environment_recursively(
+                    set_local_variable_into_environment(
                         node.for_statement.identifier.identifier.name,
                         iterator,
-                        environment,
+                        *loop_environment,
                     );
 
-                    error, value := interpret_statements(node.for_statement.statements, *new_environment(environment));
+                    error, value := interpret_statements(node.for_statement.statements, *loop_environment);
                     if error {
                         return error, .{};
                     }
