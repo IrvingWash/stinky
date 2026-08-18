@@ -273,11 +273,11 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
         case .FUNCTION_CALL;
             ok, function := get_function_from_environment(node.function_call.name, environment);
             if !ok {
-                return tprint("Line %: Undeclared function '%'", node.function_call.name, node.function_call.line_number),
+                return tprint("Line %: Undeclared function '%'", node.function_call.line_number, node.function_call.name),
                     .{};
             }
             if node.function_call.arguments.count != function.declaration.parameters.count {
-                return tprint("Line %: Wrong argument count for function '%'", node.function_call.name, node.function_call.line_number),
+                return tprint("Line %: Wrong argument count for function '%'", node.function_call.line_number, node.function_call.name),
                     .{};
             }
 
@@ -302,6 +302,8 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
             if error {
                 return error, .{};
             }
+
+            return "", .{};
         case .IDENTIFIER;
             ok, value := get_variable_from_environment(node.identifier.name, environment);
             if !ok {

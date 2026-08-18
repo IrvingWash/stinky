@@ -7,4 +7,6 @@ func factorial(n)
     println("The factorial of " + n + " is " + mul)
 end
 
-factorial(5)
+we_want := 5
+
+factorial(we_want)

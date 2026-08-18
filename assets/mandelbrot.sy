@@ -8,31 +8,35 @@ x_step         := 3
 y_step         := 7
 max_iterations := 200
 
-println "Mandelbrot Set"
+func make_mandelbrot() 
+    println "Mandelbrot Set"
 
-for y0 := top_edge, bottom_edge, -y_step do
-    for x0 := left_edge, right_edge, x_step do
-        x := 0
-        y := 0
-        char := " "
-        i := 0
+    for y0 := top_edge, bottom_edge, -y_step do
+        for x0 := left_edge, right_edge, x_step do
+            x := 0
+            y := 0
+            char := " "
+            i := 0
 
-        while i < max_iterations do
-            x_x := x^2 / 200
-            y_y := y^2 / 200
+            while i < max_iterations do
+                x_x := x^2 / 200
+                y_y := y^2 / 200
 
-            if x_x + y_y > 800 then
-                char := i
-                if i > 9 then
-                    char := "@"
+                if x_x + y_y > 800 then
+                    char := i
+                    if i > 9 then
+                        char := "@"
+                    end
+                    i := max_iterations
                 end
-                i := max_iterations
+                y := x * y / 100 + y0
+                x := x_x - y_y + x0
+                i := i + 1
             end
-            y := x * y / 100 + y0
-            x := x_x - y_y + x0
-            i := i + 1
+            print char
         end
-        print char
+        println " "
     end
-    println " "
 end
+
+make_mandelbrot()
