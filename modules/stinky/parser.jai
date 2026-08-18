@@ -83,6 +83,7 @@ get_statements :: (tokens: []Token, current_index: *int) -> error: string, [..]M
     | <function_declaration>
     | <return_statement>
     | <assignment>
+    | <local_assignment>
     | <functiona_call_statement>
 */
 get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
@@ -108,13 +109,16 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
         case .RETURN;
             error, statement := get_return_statement(tokens, current_index);
             return error, statement;
+        case .LOCAL;
+            error, statement := get_local_assignment(tokens, current_index);
+            return error, statement;
         case;
             error, left := get_expression(tokens, current_index);
             if error {
                 return error, .{};
             }
 
-            if current_index.* < tokens.count && tokens[current_index.*].type == .ASSIGN {
+            if current_index.* < tokens.count && tokens[current_index.*].type == .ASSIGNMENT {
                 current_index.* += 1;
 
                 error, right := get_expression(tokens, current_index);
@@ -286,7 +290,7 @@ get_for_statement :: (tokens: []Token, current_index: *int) -> error: string, Mo
         return error, .{};
     }
 
-    error = try_to_consume_token(.ASSIGN, tokens, current_index);
+    error = try_to_consume_token(.ASSIGNMENT, tokens, current_index);
     if error {
         return error, .{};
     }
@@ -415,6 +419,43 @@ get_return_statement :: (tokens: []Token, current_index: *int) -> error: string,
     return_statement.return_statement.expression = expression;
 
     return "", return_statement;
+}
+
+// <local_assignment> ::= 'local' <assignement>
+get_local_assignment :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
+    error := try_to_consume_token(.LOCAL, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    line_number := tokens[current_index.* - 1].line_number;
+
+    error =, lhs := get_expression(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+    if lhs.kind != .IDENTIFIER {
+        return make_parsing_error("Expected an identifier after 'local'", tokens[current_index.* - 1].line_number),
+            .{};
+    }
+
+    error = try_to_consume_token(.ASSIGNMENT, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error =, rhs := get_expression(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    statement: Model.Statement;
+    statement.kind = .LOCAL_ASSIGNMENT;
+    statement.local_assignment.line_number = line_number;
+    statement.local_assignment.left = lhs;
+    statement.local_assignment.right = rhs;
+
+    return "", statement;
 }
 
 // <parameters> ::= <identifier> (',' <identifier>)*
@@ -946,6 +987,10 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
             }
         case .ASSIGNMENT;
             print(builder, "(:=)\n");
+            pretty_print_expression(builder, statement.assignment.left, depth + 1);
+            pretty_print_expression(builder, statement.assignment.right, depth + 1);
+        case .LOCAL_ASSIGNMENT;
+            print(builder, "(local :=)\n");
             pretty_print_expression(builder, statement.assignment.left, depth + 1);
             pretty_print_expression(builder, statement.assignment.right, depth + 1);
         case .WHILE;

@@ -13,6 +13,7 @@ Statement :: union kind: Statement_Kind {
     .PRINTLN,,                 println_statement:       Println_Statement;
     .IF,,                      if_statement:            If_Statement;
     .ASSIGNMENT,,              assignment:              Assignment;
+    .LOCAL_ASSIGNMENT,,        local_assignment:        Local_Assignment;
     .WHILE,,                   while_statement:         While_Statement;
     .FOR,,                     for_statement:           For_Statement;
     .FUNCTION_DECLARATION,,    function_declaration:    Function_Declaration;
@@ -39,6 +40,7 @@ Statement_Kind :: enum {
     PRINTLN;
     IF;
     ASSIGNMENT;
+    LOCAL_ASSIGNMENT;
     WHILE;
     FOR;
     FUNCTION_DECLARATION;
@@ -78,6 +80,12 @@ If_Statement :: struct {
 }
 
 Assignment :: struct {
+    #as using node: Node;
+    left:  *Expression;
+    right: *Expression;
+}
+
+Local_Assignment :: struct {
     #as using node: Node;
     left:  *Expression;
     right: *Expression;

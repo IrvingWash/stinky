@@ -34,7 +34,7 @@ Token_Type :: enum {
     NOT_EQUALS;
     LESS_EQUALS;
     GREATER_EQUALS;
-    ASSIGN; // :=
+    ASSIGNMENT; // :=
 
     INTEGER;
     FLOAT;
@@ -57,6 +57,7 @@ Token_Type :: enum {
     PRINT;
     PRINTLN;
     RETURN;
+    LOCAL;
 }
 
 Keyword :: struct {
@@ -81,4 +82,5 @@ KEYWORDS :: Keyword.[
     { "print",   .PRINT   },
     { "println", .PRINTLN },
     { "ret",     .RETURN  },
+    { "local",   .LOCAL   },
 ];

@@ -60,7 +60,7 @@ get_variable_from_environment :: (name: string, environment: *Environment) -> ok
     return ok, value;
 }
 
-set_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
+set_local_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
     if environment == null {
         return;
     }
@@ -68,7 +68,7 @@ set_variable_into_environment :: (name: string, value: Stinky_Value, environment
     table_set(*environment.variables, name, value);
 }
 
-update_or_set_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
+update_or_set_variable_into_environment_recursively :: (name: string, value: Stinky_Value, environment: *Environment) {
     if environment == null {
         return;
     }
@@ -208,7 +208,19 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                     .{};
             }
             _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
-            update_or_set_variable_into_environment(node.assignment.left.identifier.name, right, environment);
+            update_or_set_variable_into_environment_recursively(node.assignment.left.identifier.name, right, environment);
+        case .LOCAL_ASSIGNMENT;
+            error, right := interpret_expression(node.assignment.right, environment);
+            if error {
+                return error, .{};
+            }
+
+            if node.assignment.left.kind != .IDENTIFIER {
+                return tprint("Line: %: Expected the left side of the assignment to be an identifier", node.assignment.line_number),
+                    .{};
+            }
+            _, left_value := get_variable_from_environment(node.assignment.left.identifier.name, environment);
+            set_local_variable_into_environment(node.assignment.left.identifier.name, right, environment);
         case .WHILE;
             while true {
                 error, test := interpret_expression(node.while_statement.test, environment);
@@ -270,7 +282,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
 
             if iterator.number < end.number {
                 while iterator.number <= end.number {
-                    update_or_set_variable_into_environment(
+                    update_or_set_variable_into_environment_recursively(
                         node.for_statement.identifier.identifier.name,
                         iterator,
                         environment,
@@ -288,7 +300,7 @@ interpret_statement :: (node: Model.Statement, environment: *Environment) -> err
                 }
             } else {
                 while iterator.number >= end.number {
-                    update_or_set_variable_into_environment(
+                    update_or_set_variable_into_environment_recursively(
                         node.for_statement.identifier.identifier.name,
                         iterator,
                         environment,
@@ -337,7 +349,7 @@ interpret_expression :: (node: *Model.Expression, environment: *Environment) -> 
             function_environment := new_environment(function.environment);
 
             for parameter: function.declaration.parameters {
-                set_variable_into_environment(parameter.parameter_declaration.name, arguments[it_index], *function_environment);
+                set_local_variable_into_environment(parameter.parameter_declaration.name, arguments[it_index], *function_environment);
             }
 
             error, value := interpret_statements(function.declaration.statements, *function_environment);

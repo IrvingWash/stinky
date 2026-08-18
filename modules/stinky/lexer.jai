@@ -98,7 +98,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                 }
             case #char ":";
                 if source[next] == #char "=" {
-                    token_type = .ASSIGN;
+                    token_type = .ASSIGNMENT;
                     next += 1;
                 } else {
                     token_type = .COLON;
