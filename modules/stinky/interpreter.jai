@@ -1,11 +1,25 @@
-interpret :: (ast: Model.AST) -> error: string {
+Stinky_Type :: enum {
+    NONE;
+    NUMBER;
+    STRING;
+    BOOL;
+}
+
+Stinky_Value :: union kind: Stinky_Type {
+    .NONE,,   none:    void;
+    .NUMBER,, number:  float64;
+    .STRING,, _string: string;
+    .BOOL,,   _bool:   bool;
+}
+
+interpret :: (ast: Model.AST) -> error: string, Stinky_Value {
     environment: Environment;
     defer deinit(*environment.variables);
     defer deinit(*environment.functions);
 
-    error := interpret_statements(ast.statements, *environment);
+    error, value := interpret_statements(ast.statements, *environment);
 
-    return error;
+    return error, value;
 }
 
 
@@ -19,20 +33,6 @@ Environment :: struct {
 
     variables.allocator = temp; // @Todo: maybe we can come up with something more interesting
     functions.allocator = temp;
-}
-
-Stinky_Type :: enum {
-    NONE;
-    NUMBER;
-    STRING;
-    BOOL;
-}
-
-Stinky_Value :: union kind: Stinky_Type {
-    .NONE,,   none:    void;
-    .NUMBER,, number:  float64;
-    .STRING,, _string: string;
-    .BOOL,,   _bool:   bool;
 }
 
 Stinky_Function :: struct {

@@ -1,28 +1,40 @@
-func factorial(n)
-    mul := 1
-    for i := 1, n do
-        mul := mul * i
+x := 0
+pi := 3.141592
+name := 'Stinky'
+
+-----------------------------------------------
+-- Find the max value between two numbers
+-----------------------------------------------
+func max(a, b)
+    if a > b then
+        ret a
     end
-
-    func print_stuff(stuff)
-        print "From inside the function: "
-        println stuff
-    end
-
-    print_stuff("The factorial of " + n + " is " + mul)
-
-    for temp := 0, 1 do
-        if true then
-            ret mul
-        end
-    end
-
-    println "I'm should not be seen"
+    ret b
 end
 
-we_want := 5
+-----------------------------------------------
+-- Compute the factorial of a number
+-----------------------------------------------
+func factorial(n)
+    if n <= 1 then
+        ret 1
+    else
+        ret n * factorial(n - 1)
+    end
+end
 
-result := factorial(we_want)
+-----------------------------------------------
+-- Start procedure
+-----------------------------------------------
+func main()
+    i := 0
+    while i <= 10 do
+        println(i)
+        i := i + 1
+    end
+    for i := 1, 10 do
+        println(factorial(i))
+    end
+end
 
-print "From the function call: "
-println result
+main()

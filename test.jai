@@ -30,7 +30,7 @@ tests: [..]Test;
     add_test(
         "Number primary",
         (test: *Test) {
-            source := "7.7";
+            source := "ret 7.7";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -43,7 +43,7 @@ tests: [..]Test;
     add_test(
         "Bool primary",
         (test: *Test) {
-            source := "false";
+            source := "ret false";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -55,7 +55,7 @@ tests: [..]Test;
     add_test(
         "Addition",
         (test: *Test) {
-            source := "2 + 2";
+            source := "ret 2 + 2";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -67,7 +67,7 @@ tests: [..]Test;
     add_test(
         "Multiplication",
         (test: *Test) {
-            source := "2 * 9";
+            source := "ret 2 * 9";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -79,7 +79,7 @@ tests: [..]Test;
     add_test(
         "Division",
         (test: *Test) {
-            source := "9 / 2";
+            source := "ret 9 / 2";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -91,7 +91,7 @@ tests: [..]Test;
     add_test(
         "Precedence",
         (test: *Test) {
-            source := "2 * 9 + 13";
+            source := "ret 2 * 9 + 13";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -103,7 +103,7 @@ tests: [..]Test;
     add_test(
         "Unary minus",
         (test: *Test) {
-            source := "2 * 9 - -5";
+            source := "ret 2 * 9 - -5";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -115,7 +115,7 @@ tests: [..]Test;
     add_test(
         "Caret",
         (test: *Test) {
-            source := "2^3^3 - 1";
+            source := "ret 2^3^3 - 1";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -128,7 +128,7 @@ tests: [..]Test;
     add_test(
         "Modulo",
         (test: *Test) {
-            source := "(2^3^3 - 1) % 2";
+            source := "ret (2^3^3 - 1) % 2";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -141,7 +141,7 @@ tests: [..]Test;
     add_test(
         "Parentheses 1",
         (test: *Test) {
-            source := "2 * (9 + 13) / 2";
+            source := "ret 2 * (9 + 13) / 2";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -153,7 +153,7 @@ tests: [..]Test;
     add_test(
         "Parentheses 2",
         (test: *Test) {
-            source := "2 * (9 + 13) + 2^2 + (((3 * 3) - 3) + 3.324) / 2.1";
+            source := "ret 2 * (9 + 13) + 2^2 + (((3 * 3) - 3) + 3.324) / 2.1";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -165,7 +165,7 @@ tests: [..]Test;
     add_test(
         "Parentheses 3",
         (test: *Test) {
-            source := "14 / (12 / 2) / 2";
+            source := "ret 14 / (12 / 2) / 2";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -177,7 +177,7 @@ tests: [..]Test;
     add_test(
         "Bool or",
         (test: *Test) {
-            source := "true or false";
+            source := "ret true or false";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -189,7 +189,7 @@ tests: [..]Test;
     add_test(
         "Bool or and",
         (test: *Test) {
-            source := "(44 >= 2) or false and 1 > 0";
+            source := "ret (44 >= 2) or false and 1 > 0";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -201,7 +201,7 @@ tests: [..]Test;
     add_test(
         "Not",
         (test: *Test) {
-            source := "~(44 >= 2)";
+            source := "ret ~(44 >= 2)";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -213,7 +213,7 @@ tests: [..]Test;
     add_test(
         "Not equals",
         (test: *Test) {
-            source := "~(3 ~= 2)";
+            source := "ret ~(3 ~= 2)";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -225,7 +225,7 @@ tests: [..]Test;
     add_test(
         "Equals equals",
         (test: *Test) {
-            source := "(3 == 2 + 1)";
+            source := "ret (3 == 2 + 1)";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -237,7 +237,7 @@ tests: [..]Test;
     add_test(
         "String + string",
         (test: *Test) {
-            source := "'Hello' + ' ' + 'World'";
+            source := "ret 'Hello' + ' ' + 'World'";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
@@ -249,7 +249,7 @@ tests: [..]Test;
     add_test(
         "Concatination of different types",
         (test: *Test) {
-            source := "(5 + 3) / 2 + ' what? ' + false";
+            source := "ret (5 + 3) / 2 + ' what? ' + false";
 
             error, result := stinky.run(source, false);
             expect_is_null(test, error);
