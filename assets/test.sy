@@ -4,7 +4,11 @@ func factorial(n)
         mul := mul * i
     end
 
-    println("The factorial of " + n + " is " + mul)
+    func print_stuff(stuff)
+        println stuff
+    end
+
+    print_stuff("The factorial of " + n + " is " + mul)
 end
 
 we_want := 5

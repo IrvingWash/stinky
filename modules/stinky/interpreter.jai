@@ -1,6 +1,7 @@
 interpret :: (ast: Model.AST) -> error: string {
     environment: Environment;
     defer deinit(*environment.variables);
+    defer deinit(*environment.functions);
 
     error := interpret_statements(ast.statements, *environment);
 
