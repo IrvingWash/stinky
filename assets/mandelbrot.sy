@@ -1,3 +1,5 @@
+-- This set is big, so the font size of the terminal should be descreased to view it appropriately
+
 left_edge      := -520
 right_edge     := 300
 top_edge       := 300

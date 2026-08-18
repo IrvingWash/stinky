@@ -13,9 +13,11 @@ interpret :: (ast: Model.AST) -> error: string {
 
 Environment :: struct {
     variables: Table(string, Stinky_Value);
+    functions: Table(string, Stinky_Function);
     parent:    *Environment;
 
     variables.allocator = temp; // @Todo: maybe we can come up with something more interesting
+    functions.allocator = temp;
 }
 
 Stinky_Type :: enum {
@@ -28,6 +30,11 @@ Stinky_Value :: union kind: Stinky_Type {
     .NUMBER,, number:  float64;
     .STRING,, _string: string;
     .BOOL,,   _bool:   bool;
+}
+
+Stinky_Function :: struct {
+    declaration: Model.Function_Declaration;
+    environment: *Environment;
 }
 
 new_environment :: (environment: *Environment) -> Environment {
@@ -51,6 +58,10 @@ get_variable_from_environment :: (name: string, environment: *Environment) -> ok
 }
 
 set_variable_into_environment :: (name: string, value: Stinky_Value, environment: *Environment) {
+    if environment == null {
+        return;
+    }
+
     // Traverse parents to set the variable if it is in a outer scope
     current := environment;
     while current != null {
@@ -68,9 +79,30 @@ set_variable_into_environment :: (name: string, value: Stinky_Value, environment
     table_set(*environment.variables, name, value);
 }
 
-interpret_statements :: (statements: Model.Statements, environment: *Environment) -> error: string {
-    for node: statements.statements {
-        error := interprete_statement(node, environment);
+get_function_from_environment :: (name: string, environment: *Environment) -> ok: bool, Stinky_Function {
+    if environment == null {
+        return false, .{};
+    }
+
+    ok, value := table_find(*environment.functions, name);
+    if !ok {
+        ok, value = get_function_from_environment(name, environment.parent);
+    }
+
+    return ok, value;
+}
+
+set_function_into_environment :: (name: string, value: Stinky_Function, environment: *Environment) {
+    if environment == null {
+        return;
+    }
+
+    table_set(*environment.functions, name, value);
+}
+
+interpret_statements :: (statements: [..]Model.Statement, environment: *Environment) -> error: string {
+    for node: statements {
+        error := interpret_statement(node, environment);
         if error {
             return error;
         }
@@ -79,8 +111,17 @@ interpret_statements :: (statements: Model.Statements, environment: *Environment
     return "";
 }
 
-interprete_statement :: (node: Model.Statement, environment: *Environment) -> error: string {
+interpret_statement :: (node: Model.Statement, environment: *Environment) -> error: string {
     if #complete node.kind == {
+        case .FUNCTION_DECLARATION;
+            set_function_into_environment(node.function_declaration.name, { node.function_declaration, environment }, environment);
+        case .PARAMETER_DECLARATION;
+            // Do nothing
+        case .FUNCTION_CALL_STATEMENT;
+            error := interpret_expression(node.function_call_statement.expression, environment);
+            if error {
+                return error;
+            }
         case .PRINT;
             error, value := interpret_expression(node.print_statement.value, environment);
             if error {
@@ -229,6 +270,38 @@ interprete_statement :: (node: Model.Statement, environment: *Environment) -> er
 
 interpret_expression :: (node: *Model.Expression, environment: *Environment) -> error: string, Stinky_Value {
     if #complete node.kind == {
+        case .FUNCTION_CALL;
+            ok, function := get_function_from_environment(node.function_call.name, environment);
+            if !ok {
+                return tprint("Line %: Undeclared function '%'", node.function_call.name, node.function_call.line_number),
+                    .{};
+            }
+            if node.function_call.arguments.count != function.declaration.parameters.count {
+                return tprint("Line %: Wrong argument count for function '%'", node.function_call.name, node.function_call.line_number),
+                    .{};
+            }
+
+            arguments: [..]Stinky_Value;
+            arguments.allocator = temp;
+            for argument: node.function_call.arguments {
+                error, argument_value := interpret_expression(argument, environment);
+                if error {
+                    return error, .{};
+                }
+
+                array_add(*arguments, argument_value);
+            }
+
+            function_environment := new_environment(function.environment);
+
+            for parameter: function.declaration.parameters {
+                set_variable_into_environment(parameter.parameter_declaration.name, arguments[it_index], *function_environment);
+            }
+
+            error := interpret_statements(function.declaration.statements, *function_environment);
+            if error {
+                return error, .{};
+            }
         case .IDENTIFIER;
             ok, value := get_variable_from_environment(node.identifier.name, environment);
             if !ok {

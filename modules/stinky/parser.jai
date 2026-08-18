@@ -27,17 +27,31 @@ destroy_ast :: (ast: *Model.AST) {
     ast.* = {};
 }
 
+pretty_print_ast :: (ast: Model.AST) {
+    builder: String_Builder;
+    
+    print(*builder, "=== AST ===\n");
+
+    for statement: ast.statements {
+        pretty_print_statement(*builder, statement, 0);
+    }
+
+    print(*builder, "\n");
+
+    print(builder_to_string(*builder,, temp));
+}
+
 
 
 #scope_file
 
 // <program> ::= <statement>*
-get_program :: (tokens: []Token, current_index: *int) -> error: string, Model.Statements {
+get_program :: (tokens: []Token, current_index: *int) -> error: string, [..]Model.Statement {
     error, statements := get_statements(tokens, current_index);
     return error, statements;
 }
 
-get_statements :: (tokens: []Token, current_index: *int) -> error: string, Model.Statements {
+get_statements :: (tokens: []Token, current_index: *int) -> error: string, [..]Model.Statement {
     statements: [..]Model.Statement;
 
     while (
@@ -50,15 +64,13 @@ get_statements :: (tokens: []Token, current_index: *int) -> error: string, Model
     ) {
         error, statement := get_statement(tokens, current_index);
         if error {
-            return error, {};
+            return error, statements;
         }
 
         array_add(*statements, statement);
     }
 
-    return "", Model.Statements.{
-        statements = statements,
-    };
+    return "", statements;
 }
 
 get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
@@ -78,17 +90,16 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
         case .FOR;
             error, statement := get_for_statement(tokens, current_index);
             return error, statement;
-        /*
         case .FUNC;
-            error, statement := get_func_declaration(tokens, current_index);
+            error, statement := get_function_declaration(tokens, current_index);
             return error, statement;
-        */
         case;
             error, left := get_expression(tokens, current_index);
             if error {
                 return error, .{};
             }
-            if tokens[current_index.*].type == .ASSIGN {
+
+            if current_index.* < tokens.count && tokens[current_index.*].type == .ASSIGN {
                 current_index.* += 1;
 
                 error, right := get_expression(tokens, current_index);
@@ -103,10 +114,14 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
                 assignment.line_number = tokens[current_index.* - 1].line_number;
 
                 return "", assignment;
-            }
+            } else {
+                function_call_statement: Model.Statement;
+                function_call_statement.kind = .FUNCTION_CALL_STATEMENT;
+                function_call_statement.function_call_statement.expression = left;
+                function_call_statement.function_call_statement.line_number = tokens[current_index.* - 1].line_number;
 
-            return make_parsing_error(tprint("Not a stinky statement: %", tokens[current_index.*].lexeme), tokens[current_index.*].line_number),
-                .{};
+                return "", function_call_statement;
+            }
     }
 }
 
@@ -177,7 +192,7 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
     }
 
     // Check for ELSE token and get else statements
-    else_statements: Model.Statements;
+    else_statements: [..]Model.Statement;
     if current_index.* < tokens.count && tokens[current_index.*].type == .ELSE {
         current_index.* += 1;
 
@@ -311,6 +326,89 @@ get_for_statement :: (tokens: []Token, current_index: *int) -> error: string, Mo
     statement.for_statement.statements = for_statements;
 
     return "", statement;
+}
+
+// <function_declaration> ::= 'func' <name> '('<parameters>?')' <statements> 'end'
+get_function_declaration :: (tokens: []Token, current_index: *int) -> error: string, Model.Statement {
+    error := try_to_consume_token(.FUNC, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    line_number := tokens[current_index.* - 1].line_number;
+
+    name := tokens[current_index.*];
+    if error {
+        return error, .{};
+    }
+    if name.type != .IDENTIFIER {
+        return make_parsing_error("Expected an identifier after 'func'", line_number),
+            .{};
+    }
+    current_index.* += 1;
+
+    error = try_to_consume_token(.L_PAREN, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error =, parameters := get_parameters(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error = try_to_consume_token(.R_PAREN, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error =, statements := get_statements(tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    error = try_to_consume_token(.END, tokens, current_index);
+    if error {
+        return error, .{};
+    }
+
+    statement: Model.Statement;
+    statement.kind = .FUNCTION_DECLARATION;
+    statement.function_declaration.line_number = line_number;
+    statement.function_declaration.name = name.lexeme;
+    statement.function_declaration.parameters = parameters;
+    statement.function_declaration.statements = statements;
+
+    return "", statement;
+}
+
+// <parameters> ::= <identifier> (',' <identifier>)*
+get_parameters :: (tokens: []Token, current_index: *int) -> error: string, [..]Model.Statement {
+    parameters: [..]Model.Statement;
+    while current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
+        name := tokens[current_index.*];
+        if name.type != .IDENTIFIER {
+            return make_parsing_error("Expected an identifier", tokens[current_index.* - 1].line_number),
+                parameters;
+        }
+        current_index.* += 1;
+
+        statement: Model.Statement;
+        statement.kind = .PARAMETER_DECLARATION;
+        statement.parameter_declaration.name = name.lexeme;
+        statement.parameter_declaration.line_number = tokens[current_index.* - 1].line_number;
+
+        array_add(*parameters, statement);
+
+        if current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
+            error := try_to_consume_token(.COMMA, tokens, current_index);
+            if error {
+                return error, parameters;
+            }
+        }
+    }
+
+    return "", parameters;
 }
 
 get_expression :: (tokens: []Token, current_index: *int) -> error: string, *Model.Expression {
@@ -623,7 +721,14 @@ get_exponent :: (tokens: []Token, current_index: *int) -> error: string, *Model.
     return "", lhs;
 }
 
-// <primary> ::= <integer> | <float> | <bool> | <string> | <identifier> | '(' <expr> ')'
+/*
+<primary> ::= <integer>
+    | <float>
+    | <bool>
+    | <string>
+    | <identifier>
+    | '(' <expr> ')'
+*/
 get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.Expression {
     expression := New(Model.Expression);
 
@@ -676,11 +781,34 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
             };
         case .IDENTIFIER;
             current_index.* += 1;
-            expression.kind = .IDENTIFIER;
-            expression.identifier = Model.Identifier.{
-                name = tokens[current_index.* - 1].lexeme,
-                line_number = tokens[current_index.* - 1].line_number,
-            };
+
+            if tokens[current_index.*].type == .L_PAREN {  // It's a function call
+                current_index.* += 1;
+                name := tokens[current_index.* - 2].lexeme;
+
+                error, arguments := get_arguments(tokens, current_index);
+                if error {
+                    return error, null;
+                }
+
+                error = try_to_consume_token(.R_PAREN, tokens, current_index);
+                if error {
+                    return error, null;
+                }
+
+                expression.kind = .FUNCTION_CALL;
+                expression.function_call = Model.Function_Call.{
+                    line_number = tokens[current_index.* - 1].line_number,
+                    name = name,
+                    arguments = arguments,
+                };
+            } else {
+                expression.kind = .IDENTIFIER;
+                expression.identifier = Model.Identifier.{
+                    name = tokens[current_index.* - 1].lexeme,
+                    line_number = tokens[current_index.* - 1].line_number,
+                };
+            }
         case .L_PAREN;
             current_index.* += 1;
 
@@ -711,6 +839,28 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
     return "", expression;
 }
 
+// <arguments> ::= <expression>(',' <expression>)*
+get_arguments :: (tokens: []Token, current_index: *int) -> error: string, [..]*Model.Expression {
+    arguments: [..]*Model.Expression;
+    while current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
+        error, argument := get_expression(tokens, current_index);
+        if error {
+            return error, arguments;
+        }
+
+        array_add(*arguments, argument);
+
+        if current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
+            error := try_to_consume_token(.COMMA, tokens, current_index);
+            if error {
+                return error, arguments;
+            }
+        }
+    }
+
+    return "", arguments;
+}
+
 try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index: *int) -> error: string {
     if current_index.* >= tokens.count {
         return make_parsing_error(tprint("Expected a stinky % statement, but reached the end of the file", token_type), peek_pointer(tokens).line_number);
@@ -726,6 +876,111 @@ try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index:
 
 make_parsing_error :: (error: string, line_number: int) -> string {
     return tprint("Parsing error on line %: %", line_number, error);
+}
+
+pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement, depth: int) {
+    for 0..depth - 1 {
+        print(builder, "    ");
+    }
+    if depth > 0 {
+        print(builder, "|___");
+    }
+
+    if #complete statement.kind == {
+        case .PRINT;
+            print(builder, "(print)\n");
+            pretty_print_expression(builder, statement.print_statement.value, depth + 1);
+        case .PRINTLN;
+            print(builder, "(println)\n");
+            pretty_print_expression(builder, statement.println_statement.value, depth + 1);
+        case .IF;
+            print(builder, "(if)\n");
+            pretty_print_expression(builder, statement.if_statement.test, depth + 1);
+            for statement: statement.if_statement.then_statements {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+            for statement: statement.if_statement.else_statements {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+        case .ASSIGNMENT;
+            print(builder, "(:=)\n");
+            pretty_print_expression(builder, statement.assignment.left, depth + 1);
+            pretty_print_expression(builder, statement.assignment.right, depth + 1);
+        case .WHILE;
+            print(builder, "(while)\n");
+            pretty_print_expression(builder, statement.while_statement.test, depth + 1);
+            for statement: statement.while_statement.statements {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+        case .FOR;
+            print(builder, "(for)\n");
+            pretty_print_expression(builder, statement.for_statement.identifier, depth + 1);
+            pretty_print_expression(builder, statement.for_statement.start, depth + 1);
+            pretty_print_expression(builder, statement.for_statement.end, depth + 1);
+            pretty_print_expression(builder, statement.for_statement.step, depth + 1);
+            for statement: statement.for_statement.statements {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+        case .FUNCTION_DECLARATION;
+            print(builder, "(func %)\n", statement.function_declaration.name);
+            for statement: statement.function_declaration.parameters {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+            for statement: statement.function_declaration.statements {
+                pretty_print_statement(builder, statement, depth + 1);
+            }
+        case .PARAMETER_DECLARATION;
+            print(builder, "(param %)\n", statement.parameter_declaration.name);
+        case .FUNCTION_CALL_STATEMENT;
+            print(builder, "(func call)\n");
+            pretty_print_expression(builder, statement.function_call_statement.expression, depth + 1);
+    }
+}
+
+pretty_print_expression :: (builder: *String_Builder, expression: *Model.Expression, depth: int) {
+    for 0..depth - 1 {
+        print(builder, "    ");
+    }
+    if depth > 0 {
+        print(builder, "|___");
+    }
+
+    if expression == null {
+        print(builder, "null\n");
+        return;
+    }
+
+    if #complete expression.kind == {
+        case .INTEGER;
+            print(builder, "(%)\n", expression.integer.value);
+        case .FLOAT;
+            print(builder, "(%)\n", expression._float.value);
+        case .BINARY_OPERATOR;
+            print(builder, "(%)\n", expression.binary_operator.op.lexeme);
+            pretty_print_expression(builder, expression.binary_operator.lhs, depth + 1);
+            pretty_print_expression(builder, expression.binary_operator.rhs, depth + 1);
+        case .LOGICAL_OPERATOR;
+            print(builder, "(%)\n", expression.logical_operator.op.lexeme);
+            pretty_print_expression(builder, expression.logical_operator.lhs, depth + 1);
+            pretty_print_expression(builder, expression.logical_operator.rhs, depth + 1);
+        case .UNARY_OPERATOR;
+            print(builder, "(%)\n", expression.unary_operator.op.lexeme);
+            pretty_print_expression(builder, expression.unary_operator.operand, depth + 1);
+        case .GROUPING;
+            print(builder, "(())\n");
+            pretty_print_expression(builder, expression.grouping.value, depth + 1);
+        case .BOOL;
+            print(builder, "(%)\n", expression._bool.value);
+        case .STRING;
+            print(builder, "(%)\n", expression._string.value);
+        case .IDENTIFIER;
+            print(builder, "(%)\n", expression.identifier.name);
+        case .FUNCTION_CALL;
+            print(builder, "(%)\n", expression.function_call.name);
+            for argument: expression.function_call.arguments {
+                pretty_print_expression(builder, argument, depth + 1);
+            }
+    }
 }
 
 #import "Basic";

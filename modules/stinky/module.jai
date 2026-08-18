@@ -27,7 +27,7 @@ run :: (source: string, verbose: bool) -> error: string {
     }
     defer Parser.destroy_ast(*ast);
     if verbose {
-        print("%\n", ast);
+        Parser.pretty_print_ast(ast);
     }
 
     error = Interpreter.interpret(ast);

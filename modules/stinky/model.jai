@@ -1,5 +1,5 @@
 AST :: struct {
-    statements: Statements;
+    statements: [..]Statement;
     allocator:  Allocator;
 }
 
@@ -7,18 +7,17 @@ Node :: struct {
     line_number: int;
 }
 
-Statements :: struct {
-    statements: [..]Statement;
-}
-
 Statement :: union kind: Statement_Kind {
     #as using node: Node;
-    .PRINT,,      print_statement:   Print_Statement;
-    .PRINTLN,,    println_statement: Println_Statement;
-    .IF,,         if_statement:      If_Statement;
-    .ASSIGNMENT,, assignment:        Assignment;
-    .WHILE,,      while_statement:   While_Statement;
-    .FOR,,        for_statement:     For_Statement;
+    .PRINT,,                   print_statement:         Print_Statement;
+    .PRINTLN,,                 println_statement:       Println_Statement;
+    .IF,,                      if_statement:            If_Statement;
+    .ASSIGNMENT,,              assignment:              Assignment;
+    .WHILE,,                   while_statement:         While_Statement;
+    .FOR,,                     for_statement:           For_Statement;
+    .FUNCTION_DECLARATION,,    function_declaration:    Function_Declaration;
+    .PARAMETER_DECLARATION,,   parameter_declaration:   Parameter_Declaration;
+    .FUNCTION_CALL_STATEMENT,, function_call_statement: Function_Call_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -31,6 +30,7 @@ Expression :: union kind: Expression_Kind {
     .BOOL,,             _bool:            Bool;
     .STRING,,           _string:          String;
     .IDENTIFIER,,       identifier:       Identifier;
+    .FUNCTION_CALL,,    function_call:    Function_Call;
 }
 
 Statement_Kind :: enum {
@@ -40,6 +40,9 @@ Statement_Kind :: enum {
     ASSIGNMENT;
     WHILE;
     FOR;
+    FUNCTION_DECLARATION;
+    PARAMETER_DECLARATION;
+    FUNCTION_CALL_STATEMENT;
 }
 
 Expression_Kind :: enum {
@@ -52,6 +55,7 @@ Expression_Kind :: enum {
     BOOL;
     STRING;
     IDENTIFIER;
+    FUNCTION_CALL;
 }
 
 Print_Statement :: struct {
@@ -67,8 +71,8 @@ Println_Statement :: struct {
 If_Statement :: struct {
     #as using node: Node;
     test: *Expression;
-    then_statements: Statements;
-    else_statements: Statements;
+    then_statements: [..]Statement;
+    else_statements: [..]Statement;
 }
 
 Assignment :: struct {
@@ -80,7 +84,7 @@ Assignment :: struct {
 While_Statement :: struct {
     #as using node: Node;
     test:       *Expression;
-    statements: Statements;
+    statements: [..]Statement;
 }
 
 For_Statement :: struct {
@@ -89,7 +93,30 @@ For_Statement :: struct {
     start:      *Expression;
     end:        *Expression;
     step:       *Expression;
-    statements: Statements;
+    statements: [..]Statement;
+}
+
+Function_Declaration :: struct {
+    #as using node: Node;
+    name:       string;
+    parameters: [..]Statement;
+    statements: [..]Statement;
+}
+
+Parameter_Declaration :: struct {
+    #as using node: Node;
+    name: string;
+}
+
+Function_Call :: struct {
+    #as using node: Node;
+    name:      string;
+    arguments: [..]*Expression;
+}
+
+Function_Call_Statement :: struct {
+    #as using node: Node;
+    expression: *Expression;
 }
 
 Integer :: struct {
@@ -119,7 +146,7 @@ Identifier :: struct {
 
 Binary_Operator :: struct {
     #as using node: Node;
-    op:        Token;
+    op:  Token;
     lhs: *Expression;
     rhs: *Expression;
 }
