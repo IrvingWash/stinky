@@ -5,26 +5,13 @@ make_ast :: (tokens: []Token) -> error: string, Model.AST {
 
     ast: Model.AST;
 
-    pool := New(Flat_Pool);
-    ast.allocator = {
-        proc = flat_pool_allocator_proc,
-        data = pool,
-    };
-
-    push_allocator(ast.allocator);
+    push_allocator(temp);
 
     current_index: int;
 
     error:, ast.statements = get_program(tokens, *current_index);
 
     return error, ast;
-}
-
-destroy_ast :: (ast: *Model.AST) {
-    fini(ast.allocator.data);
-    free(ast.allocator.data);
-
-    ast.* = {};
 }
 
 pretty_print_ast :: (ast: Model.AST) {

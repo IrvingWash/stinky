@@ -1,4 +1,6 @@
 tokenize :: (source: string) -> error: string, [..]Token {
+    push_allocator(temp);
+
     tokens: [..]Token;
 
     if source.count < 1 {

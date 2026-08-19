@@ -1,6 +1,5 @@
 AST :: struct {
     statements: [..]Statement;
-    allocator:  Allocator;
 }
 
 Node :: struct {
