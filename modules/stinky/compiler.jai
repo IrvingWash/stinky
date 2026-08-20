@@ -28,8 +28,6 @@ compile :: (ast: Model.AST) -> [..]Instruction {
     return code;
 }
 
-
-
 pretty_print_code :: (code: [..]Instruction) {
     builder: String_Builder;
 
@@ -104,6 +102,18 @@ pretty_print_code :: (code: [..]Instruction) {
             case .HALT;
                 apply_depth(*builder, depth);
                 print(*builder, "HALT\n");
+            case .OR;
+                apply_depth(*builder, depth);
+                print(*builder, "OR\n");
+            case .AND;
+                apply_depth(*builder, depth);
+                print(*builder, "AND\n");
+            case .XOR;
+                apply_depth(*builder, depth);
+                print(*builder, "XOR\n");
+            case .NEG;
+                apply_depth(*builder, depth);
+                print(*builder, "NEG\n");
         }
     }
 
@@ -132,6 +142,10 @@ Instruction :: union kind: Instruction_Kind {
     .NE,,      ne:      No_Operand_Instruction;
     .LABEL,,   label:   Label_Instruction;
     .HALT,,    halt:    No_Operand_Instruction;
+    .AND,,     and:     No_Operand_Instruction;
+    .OR,,      or:      No_Operand_Instruction;
+    .XOR,,     xor:     No_Operand_Instruction;
+    .NEG,,     neg:     No_Operand_Instruction;
 }
 
 Instruction_Kind :: enum {
@@ -152,6 +166,10 @@ Instruction_Kind :: enum {
     NE;
     LABEL;
     HALT;
+    AND;
+    OR;
+    XOR;
+    NEG;
 }
 
 Push_Instruction :: struct {
@@ -197,14 +215,23 @@ compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
                 }
             );
         case .IF;
+            assert(false, "if");
         case .ASSIGNMENT;
+            assert(false, "assignment");
         case .LOCAL_ASSIGNMENT;
+            assert(false, "local");
         case .WHILE;
+            assert(false, "while");
         case .FOR;
+            assert(false, "for");
         case .FUNCTION_DECLARATION;
+            assert(false, "func decl");
         case .PARAMETER_DECLARATION;
+            assert(false, "param decl");
         case .FUNCTION_CALL;
+            assert(false, "func call");
         case .RETURN;
+            assert(false, "return");
     }
 }
 
@@ -338,8 +365,61 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
             }
         case .LOGICAL_OPERATOR;
+            compile_expression(node.logical_operator.lhs, code);
+            compile_expression(node.logical_operator.rhs, code);
+            if node.logical_operator.op.type == {
+                case .AND;
+                    array_add(
+                        code,
+                        Instruction.{
+                            kind = .AND,
+                            and = {},
+                        },
+                    );
+                case .OR;
+                    array_add(
+                        code,
+                        Instruction.{
+                            kind = .OR,
+                            or = {},
+                        },
+                    );
+            }
         case .UNARY_OPERATOR;
+            compile_expression(node.unary_operator.operand, code);
+
+            if node.unary_operator.op.type == {
+                case .NOT;
+                    array_add(
+                        code,
+                        Instruction.{
+                            kind = .PUSH,
+                            push = {
+                                value = {
+                                    kind = .NUMBER,
+                                    number = 1,
+                                },
+                            },
+                        },
+                    );
+                    array_add(
+                        code,
+                        Instruction.{
+                            kind = .XOR,
+                            xor = {},
+                        },
+                    );
+                case .MINUS;
+                    array_add(
+                        code,
+                        Instruction.{
+                            kind = .NEG,
+                            neg = {},
+                        },
+                    );
+            }
         case .GROUPING;
+            assert(false, "group");
         case .BOOL;
             array_add(
                 code,
@@ -367,7 +447,9 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                 },
             );
         case .IDENTIFIER;
+            assert(false, "ident");
         case .FUNCTION_CALL;
+            assert(false, "func call");
     }
 }
 
