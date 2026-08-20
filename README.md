@@ -53,7 +53,12 @@ make_mandelbrot()
 stinky path_to_your_stinky_code.sy --verbose
 ```
 
-`--verbose` emits the stinky source code, the stinky tokens and the stinky AST
+### Flags
+`--verbose`     - emits verbose information about the whole process of lexing, parsing, and running your stinky code.
+`--vm`          - uses a virtual machine to run your stinky program. This is the default behavior.
+`--interpreter` - uses a tree-walking interpreter to run your stinky program.
+
+Currently the VM implementation is not finished, so the `--interpreter` flag is recommended.
 
 ## File extension
 The file extension for your stinky files is `.sy` (pronounced exactly as "sigh").
