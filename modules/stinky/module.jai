@@ -7,6 +7,7 @@ Lexer       :: #import,file "lexer.jai";
 Parser      :: #import,file "parser.jai";
 Interpreter :: #import,file "interpreter.jai";
 Compiler    :: #import,file "compiler.jai";
+VM          :: #import,file "virtual_machine.jai";
 
 run :: (source: string, verbose: bool) -> error: string {
     if verbose {
@@ -29,6 +30,9 @@ run :: (source: string, verbose: bool) -> error: string {
         Parser.pretty_print_ast(ast);
     }
 
+    if verbose {
+        print("=== Running the program in the Interpreter ===\n");
+    }
     error =, value := Interpreter.interpret(ast);
     if error {
         return tprint("Runtime error: %", error);
@@ -41,6 +45,11 @@ run :: (source: string, verbose: bool) -> error: string {
     if verbose {
         Compiler.pretty_print_code(code);
     }
+
+    if verbose {
+        print("=== Running the program in the VM ===\n");
+    }
+    VM.execute(code);
 
     return "";
 }
