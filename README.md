@@ -5,7 +5,7 @@ A toy interpreted programming language made to learn how all of this works. This
 ## Usage
 
 ```sy
--- This set is big, so the font size of the terminal should be descreased to view it appropriately
+-- This set is big, so the font size of the terminal should be decreased to view it appropriately
 
 left_edge      := -520
 right_edge     := 300
@@ -54,9 +54,9 @@ stinky path_to_your_stinky_code.sy --verbose
 ```
 
 ### Flags
-`--verbose`     - emits verbose information about the whole process of lexing, parsing, and running your stinky code.
-`--vm`          - uses a virtual machine to run your stinky program. This is the default behavior.
-`--interpreter` - uses a tree-walking interpreter to run your stinky program.
+- `--verbose`     - emits verbose information about the whole process of lexing, parsing, and running your stinky code.
+- `--vm`          - uses a virtual machine to run your stinky program. This is the default behavior.
+- `--interpreter` - uses a tree-walking interpreter to run your stinky program.
 
 Currently the VM implementation is not finished, so the `--interpreter` flag is recommended.
 
