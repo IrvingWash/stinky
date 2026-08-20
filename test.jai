@@ -19,6 +19,7 @@ tests: [..]Test;
 
 #run {
     defer report_memory_leaks();
+    defer reset_temporary_storage();
 
     setup_formatting();
 
@@ -32,7 +33,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 7.7";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 7.7);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -45,7 +46,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret false";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, false);
             expect_are_equal(test, result.kind, .BOOL);
@@ -57,7 +58,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 + 2";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 4);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -69,7 +70,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 * 9";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 18);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -81,7 +82,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 9 / 2";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 4.5);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -93,7 +94,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 * 9 + 13";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 31);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -105,7 +106,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 * 9 - -5";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 23);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -117,7 +118,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2^3^3 - 1";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             // assert(result.number == 134217727);
             cope_do_not_equal(test, ceil(result.number), 134217727, result.number); // @Todo: Try to solve this. This happens because of a small computation error
@@ -130,7 +131,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret (2^3^3 - 1) % 2";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             // expect_are_equal(test, result.number, 1);
             cope_do_not_equal(test, cast(float64, 1), cast(float64, 1), result.number); // @Todo: Try to solve this. This happens because of a small computation error
@@ -143,7 +144,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 * (9 + 13) / 2";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 22);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -155,7 +156,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 2 * (9 + 13) + 2^2 + (((3 * 3) - 3) + 3.324) / 2.1";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 52.44);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -167,7 +168,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 14 / (12 / 2) / 2";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result.number, 1.1666666666666667);
             expect_are_equal(test, result.kind, .NUMBER);
@@ -179,7 +180,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret true or false";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, true);
             expect_are_equal(test, result.kind, .BOOL);
@@ -191,7 +192,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret (44 >= 2) or false and 1 > 0";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, true);
             expect_are_equal(test, result.kind, .BOOL);
@@ -203,7 +204,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret ~(44 >= 2)";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, false);
             expect_are_equal(test, result.kind, .BOOL);
@@ -215,7 +216,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret ~(3 ~= 2)";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, false);
             expect_are_equal(test, result.kind, .BOOL);
@@ -227,7 +228,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret (3 == 2 + 1)";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._bool, true);
             expect_are_equal(test, result.kind, .BOOL);
@@ -239,7 +240,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret 'Hello' + ' ' + 'World'";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._string, "Hello World");
             expect_are_equal(test, result.kind, .STRING);
@@ -251,7 +252,7 @@ tests: [..]Test;
         (test: *Test) {
             source := "ret (5 + 3) / 2 + ' what? ' + false";
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
             expect_is_null(test, error);
             expect_are_equal(test, result._string, "4 what? false");
             expect_are_equal(test, result.kind, .STRING);
@@ -278,7 +279,7 @@ end
 ret check_age(age)
             STINKY
 
-            error, result := stinky.run(source, false);
+            error, result := stinky.run(source, false, .INTERPRETER);
 
             expect_is_null(test, error);
             expect_are_equal(test, result.kind, .BOOL);

@@ -31,7 +31,7 @@ main :: () {
     }
     defer free(source);
 
-    error = stinky.run(source, config.verbose);
+    error = stinky.run(source, config.verbose, config.mode);
     if error {
         terminate("Failed: %\n", error);
     }

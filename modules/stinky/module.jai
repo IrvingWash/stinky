@@ -9,49 +9,61 @@ Interpreter :: #import,file "interpreter.jai";
 Compiler    :: #import,file "compiler.jai";
 VM          :: #import,file "virtual_machine.jai";
 
-run :: (source: string, verbose: bool) -> error: string {
+Mode :: enum {
+    VM;
+    INTERPRETER;
+}
+
+run :: (source: string, verbose: bool, mode: Mode) -> error: string, value: Interpreter.Stinky_Value {
     if verbose {
         pretty_print_source(source);
     }
 
+    if verbose {
+        print("=== Lexing the stinky code ===\n");
+    }
     error, tokens := Lexer.tokenize(source);
     if error {
-        return tprint("Lexer error: %", error);
+        return error, {};
     }
     if verbose {
         Lexer.pretty_print_tokens(tokens);
     }
 
+    if verbose {
+        print("Parsing the stinky code\n");
+    }
     error =, ast := Parser.make_ast(tokens);
     if error {
-        return tprint("Parser error: %", error);
+        return error, {};
     }
     if verbose {
         Parser.pretty_print_ast(ast);
     }
 
-    if verbose {
-        print("=== Running the program in the Interpreter ===\n");
-    }
-    error =, value := Interpreter.interpret(ast);
-    if error {
-        return tprint("Runtime error: %", error);
-    }
+    if #complete mode == {
+        case .INTERPRETER;
+            if verbose {
+                print("=== Interpreting the program ===\n");
+            }
+            error, value := Interpreter.interpret(ast);
+            return error, value;
+        case .VM;
+            if verbose {
+                print("=== Compiling the program for the VM ===\n");
+            }
+            code := Compiler.compile(ast);
+            if verbose {
+                Compiler.pretty_print_code(code);
+            }
 
-    code := Compiler.compile(ast);
-    if error {
-        return tprint("Compiler error: %", error);
-    }
-    if verbose {
-        Compiler.pretty_print_code(code);
-    }
+            if verbose {
+                print("=== Running the program in the VM ===\n");
+            }
+            error = VM.execute(code);
 
-    if verbose {
-        print("=== Running the program in the VM ===\n");
+            return error, {};
     }
-    VM.execute(code);
-
-    return "";
 }
 
 

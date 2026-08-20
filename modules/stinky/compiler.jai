@@ -271,7 +271,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
             }
         case .GROUPING;
-            assert(false, "group");
+            compile_expression(node.grouping.expression, code);
         case .BOOL;
             array_add(
                 code,

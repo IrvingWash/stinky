@@ -4,7 +4,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
     tokens: [..]Token;
 
     if source.count < 1 {
-        return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"result := 69 + 420\"", tokens;
+        return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"return 69 + 420\"", tokens;
     }
 
     line_number:  u32 = 1;
@@ -209,7 +209,7 @@ make_lexeme :: (source: string, start: s32, last: s32) -> string {
 }
 
 make_tokenizing_error :: (error: string, line_number: int) -> string {
-    return tprint("Tokenizing error on line %: %", line_number, error);
+    return tprint("Tokenizing error (line %): %", line_number, error);
 }
 
 #import "Basic";
