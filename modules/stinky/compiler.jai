@@ -199,7 +199,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                             ge = {},
                         },
                     );
-                case .EQUALS;
+                case .EQUALS_EQUALS;
                     array_add(
                         code,
                         Instruction.{
@@ -248,8 +248,8 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                             kind = .PUSH,
                             push = {
                                 value = {
-                                    kind = .NUMBER,
-                                    number = 1,
+                                    kind = .BOOL,
+                                    _bool = true,
                                 },
                             },
                         },

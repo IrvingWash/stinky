@@ -76,7 +76,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .NUMBER,
                         number = lhs.number - rhs.number,
@@ -109,7 +109,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .NUMBER,
                         number = lhs.number * rhs.number,
@@ -122,7 +122,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .NUMBER,
                         number = lhs.number / rhs.number,
@@ -135,7 +135,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .NUMBER,
                         number = cast(float64, cast(int, lhs.number) % cast(int, rhs.number)),
@@ -148,10 +148,10 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .NUMBER,
-                        number = pow(rhs.number, lhs.number),
+                        number = pow(lhs.number, rhs.number),
                     };
                     push_to_stack(*vm, result);
                 } else {
@@ -161,7 +161,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs.number < rhs.number,
@@ -174,7 +174,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs.number > rhs.number,
@@ -187,7 +187,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs.number <= rhs.number,
@@ -200,7 +200,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .NUMBER && lhs.kind == .NUMBER {
+                if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs.number >= rhs.number,
@@ -217,7 +217,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .BOOL && lhs.kind == .BOOL {
+                if lhs.kind == .BOOL && rhs.kind == .BOOL {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs._bool && rhs._bool,
@@ -230,7 +230,7 @@ execute :: (code: [..]Instruction) -> error: string {
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
 
-                if rhs.kind == .BOOL && lhs.kind == .BOOL {
+                if lhs.kind == .BOOL && rhs.kind == .BOOL {
                     result := Value.{
                         kind = .BOOL,
                         _bool = lhs._bool || rhs._bool,
@@ -240,7 +240,18 @@ execute :: (code: [..]Instruction) -> error: string {
                     return make_vm_error(vm, "Unsupported operands for OR");
                 }
             case .XOR;
-                return make_vm_error(vm, "Unsupported operands for XOR");
+                rhs := pop_from_stack(*vm);
+                lhs := pop_from_stack(*vm);
+
+                if lhs.kind == .BOOL && rhs.kind == .BOOL {
+                    result := Value.{
+                        kind = .BOOL,
+                        _bool = lhs._bool ^ rhs._bool,
+                    };
+                    push_to_stack(*vm, result);
+                } else {
+                    return make_vm_error(vm, "Unsupported operands for XOR");
+                }
             case .NEG;
                 value := pop_from_stack(*vm);
                 if value.kind == .BOOL {
@@ -262,7 +273,19 @@ execute :: (code: [..]Instruction) -> error: string {
                         _bool = lhs._bool == rhs._bool,
                     };
                     push_to_stack(*vm, result);
-                } else {
+                } else if lhs.kind == .NUMBER && rhs.kind == .NUMBER {
+                    result := Value.{
+                        kind = .BOOL,
+                        _bool = lhs.number == rhs.number,
+                    };
+                    push_to_stack(*vm, result);
+                } else if lhs.kind == .STRING && rhs.kind == .STRING {
+                    result := Value.{
+                        kind = .BOOL,
+                        _bool = lhs._string == rhs._string,
+                    };
+                    push_to_stack(*vm, result);
+                }else {
                     return make_vm_error(vm, "Unsupported operands for EQ");
                 }
         }
@@ -293,7 +316,7 @@ pop_from_stack :: (vm: *Virtual_Machine) -> Value {
 }
 
 make_vm_error :: (vm: Virtual_Machine, message: string) -> string {
-    return tprint("Runtime error (PC: '%', SP: '%': %)", vm.pc, vm.sp, message);
+    return tprint("Runtime error (PC: '%'): %", vm.pc - 1, message);
 }
 
 #import "Basic";
