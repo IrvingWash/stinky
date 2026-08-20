@@ -179,7 +179,7 @@ Value_Type :: enum {
 compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
     if #complete node.kind == {
         case .PRINT;
-            compile_expression(node.print_statement.expression, code);
+            compile_expression(node.print.expression, code);
             array_add(
                 code,
                 Instruction.{
@@ -188,7 +188,7 @@ compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
                 }
             );
         case .PRINTLN;
-            compile_expression(node.print_statement.expression, code);
+            compile_expression(node.print.expression, code);
             array_add(
                 code,
                 Instruction.{
@@ -203,8 +203,8 @@ compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
         case .FOR;
         case .FUNCTION_DECLARATION;
         case .PARAMETER_DECLARATION;
-        case .FUNCTION_CALL_STATEMENT;
-        case .RETURN_STATEMENT;
+        case .FUNCTION_CALL;
+        case .RETURN;
     }
 }
 

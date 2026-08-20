@@ -121,12 +121,12 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
 
                 return "", assignment;
             } else {
-                function_call_statement: Model.Statement;
-                function_call_statement.kind = .FUNCTION_CALL_STATEMENT;
-                function_call_statement.function_call_statement.expression = left;
-                function_call_statement.function_call_statement.line_number = tokens[current_index.* - 1].line_number;
+                statement: Model.Statement;
+                statement.kind = .FUNCTION_CALL;
+                statement.function_call.expression = left;
+                statement.function_call.line_number = tokens[current_index.* - 1].line_number;
 
-                return "", function_call_statement;
+                return "", statement;
             }
     }
 }
@@ -142,8 +142,8 @@ get_print_statement :: (tokens: []Token, current_index: *int) -> error: string, 
 
         statement: Model.Statement;
         statement.kind = .PRINT;
-        statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.expression = expression;
+        statement.print.line_number = tokens[current_index.* - 1].line_number;
+        statement.print.expression = expression;
 
         return "", statement;
     }
@@ -162,8 +162,8 @@ get_println_statement :: (tokens: []Token, current_index: *int) -> error: string
 
         statement: Model.Statement;
         statement.kind = .PRINTLN;
-        statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.expression = expression;
+        statement.print.line_number = tokens[current_index.* - 1].line_number;
+        statement.print.expression = expression;
 
         return "", statement;
     }
@@ -215,10 +215,10 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
 
     statement: Model.Statement;
     statement.kind = .IF;
-    statement.if_statement.test = test;
-    statement.if_statement.then_statements = then_statements;
-    statement.if_statement.else_statements = else_statements;
-    statement.if_statement.line_number = line_number;
+    statement._if.test = test;
+    statement._if.then_statements = then_statements;
+    statement._if.else_statements = else_statements;
+    statement._if.line_number = line_number;
 
     return "", statement;
 }
@@ -256,9 +256,9 @@ get_while_statement :: (tokens: []Token, current_index: *int) -> error: string, 
 
     statement: Model.Statement;
     statement.kind = .WHILE;
-    statement.while_statement.test = test;
-    statement.while_statement.statements = while_statements;
-    statement.while_statement.line_number = line_number;
+    statement._while.test = test;
+    statement._while.statements = while_statements;
+    statement._while.line_number = line_number;
 
     return "", statement;
 }
@@ -324,12 +324,12 @@ get_for_statement :: (tokens: []Token, current_index: *int) -> error: string, Mo
 
     statement: Model.Statement;
     statement.kind = .FOR;
-    statement.for_statement.line_number = line_number;
-    statement.for_statement.identifier = identifier;
-    statement.for_statement.start = start;
-    statement.for_statement.end = end;
-    statement.for_statement.step = step;
-    statement.for_statement.statements = for_statements;
+    statement._for.line_number = line_number;
+    statement._for.identifier = identifier;
+    statement._for.start = start;
+    statement._for.end = end;
+    statement._for.step = step;
+    statement._for.statements = for_statements;
 
     return "", statement;
 }
@@ -400,12 +400,12 @@ get_return_statement :: (tokens: []Token, current_index: *int) -> error: string,
         return error, .{};
     }
 
-    return_statement: Model.Statement;
-    return_statement.kind = .RETURN_STATEMENT;
-    return_statement.return_statement.line_number = tokens[current_index.* - 1].line_number;
-    return_statement.return_statement.expression = expression;
+    statement: Model.Statement;
+    statement.kind = .RETURN;
+    statement._return.line_number = tokens[current_index.* - 1].line_number;
+    statement._return.expression = expression;
 
-    return "", return_statement;
+    return "", statement;
 }
 
 // <local_assignment> ::= 'local' <assignement>
@@ -959,17 +959,17 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
     if #complete statement.kind == {
         case .PRINT;
             print(builder, "(print)\n");
-            pretty_print_expression(builder, statement.print_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement.print.expression, depth + 1);
         case .PRINTLN;
             print(builder, "(println)\n");
-            pretty_print_expression(builder, statement.println_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement.println.expression, depth + 1);
         case .IF;
             print(builder, "(if)\n");
-            pretty_print_expression(builder, statement.if_statement.test, depth + 1);
-            for statement: statement.if_statement.then_statements {
+            pretty_print_expression(builder, statement._if.test, depth + 1);
+            for statement: statement._if.then_statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
-            for statement: statement.if_statement.else_statements {
+            for statement: statement._if.else_statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .ASSIGNMENT;
@@ -982,17 +982,17 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
             pretty_print_expression(builder, statement.assignment.right, depth + 1);
         case .WHILE;
             print(builder, "(while)\n");
-            pretty_print_expression(builder, statement.while_statement.test, depth + 1);
-            for statement: statement.while_statement.statements {
+            pretty_print_expression(builder, statement._while.test, depth + 1);
+            for statement: statement._while.statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .FOR;
             print(builder, "(for)\n");
-            pretty_print_expression(builder, statement.for_statement.identifier, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.start, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.end, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.step, depth + 1);
-            for statement: statement.for_statement.statements {
+            pretty_print_expression(builder, statement._for.identifier, depth + 1);
+            pretty_print_expression(builder, statement._for.start, depth + 1);
+            pretty_print_expression(builder, statement._for.end, depth + 1);
+            pretty_print_expression(builder, statement._for.step, depth + 1);
+            for statement: statement._for.statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .FUNCTION_DECLARATION;
@@ -1005,12 +1005,12 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
             }
         case .PARAMETER_DECLARATION;
             print(builder, "(param %)\n", statement.parameter_declaration.name);
-        case .FUNCTION_CALL_STATEMENT;
+        case .FUNCTION_CALL;
             print(builder, "(func call)\n");
-            pretty_print_expression(builder, statement.function_call_statement.expression, depth + 1);
-        case .RETURN_STATEMENT;
+            pretty_print_expression(builder, statement.function_call.expression, depth + 1);
+        case .RETURN;
             print(builder, "(return)\n");
-            pretty_print_expression(builder, statement.return_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement._return.expression, depth + 1);
     }
 }
 
