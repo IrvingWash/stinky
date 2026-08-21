@@ -1,5 +1,8 @@
+// Made up instructions for the made up virtual machine
+
 Instruction :: union kind: Instruction_Kind {
     .PUSH,,         push:         Push_Instruction;
+    .POP,,          pop:          No_Operand_Instruction;
     .ADD,,          add:          No_Operand_Instruction;
     .SUB,,          sub:          No_Operand_Instruction;
     .PRINT,,        print:        No_Operand_Instruction;
@@ -24,10 +27,13 @@ Instruction :: union kind: Instruction_Kind {
     .JMP,,          jmp:          Jump_Instruction;
     .STORE_GLOBAL,, store_global: Store_Global_Instruction;
     .LOAD_GLOBAL,,  load_global:  Load_Global_Instruction;
+    .STORE_LOCAL,,  store_local:  Store_Local_Instruction;
+    .LOAD_LOCAL,,   load_local:   Load_Local_Instruction;
 }
 
 Instruction_Kind :: enum {
     PUSH;
+    POP;
     ADD;
     SUB;
     PRINT;
@@ -52,6 +58,8 @@ Instruction_Kind :: enum {
     JMP;
     STORE_GLOBAL;
     LOAD_GLOBAL;
+    STORE_LOCAL;
+    LOAD_LOCAL;
 }
 
 Push_Instruction :: struct {
@@ -74,6 +82,14 @@ Store_Global_Instruction :: struct {
 
 Load_Global_Instruction :: struct {
     name: string;
+}
+
+Store_Local_Instruction :: struct {
+    slot: int;
+}
+
+Load_Local_Instruction :: struct {
+    slot: int;
 }
 
 Value :: union kind: Value_Type {
@@ -107,6 +123,9 @@ prettify_instruction :: (instruction: Instruction, builder: *String_Builder, dep
                 case .BOOL;
                     print(builder, "%\n", instruction.push.value._bool);
             }
+        case .POP;
+            apply_depth(builder, depth.*);
+            print(builder, "POP\n");
         case .JMPZ;
             apply_depth(builder, depth.*);
             print(builder, "JMPZ %\n", instruction.jmpz.label_name);
@@ -179,6 +198,12 @@ prettify_instruction :: (instruction: Instruction, builder: *String_Builder, dep
         case .LOAD_GLOBAL;
             apply_depth(builder, depth.*);
             print(builder, "LOAD_GLOBAL %\n", instruction.load_global.name);
+        case .STORE_LOCAL;
+            apply_depth(builder, depth.*);
+            print(builder, "STORE_LOCAL %\n", instruction.store_local.slot);
+        case .LOAD_LOCAL;
+            apply_depth(builder, depth.*);
+            print(builder, "LOAD_LOCAL %\n", instruction.load_local.slot);
     }
 }
 

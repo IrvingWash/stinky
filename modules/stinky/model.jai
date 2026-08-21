@@ -1,3 +1,5 @@
+// AST node definitions
+
 AST :: struct {
     statements: [..]Statement;
 }

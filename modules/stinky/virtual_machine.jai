@@ -1,3 +1,5 @@
+// A made up virtual machine
+
 execute :: (code: [..]Instruction) -> error: string {
     push_allocator(temp);
 
@@ -20,6 +22,8 @@ execute :: (code: [..]Instruction) -> error: string {
                 vm.is_running = false;
             case .PUSH;
                 push_to_stack(*vm, instruction.push.value);
+            case .POP;
+                pop_from_stack(*vm);
             case .ADD;
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
@@ -327,6 +331,21 @@ execute :: (code: [..]Instruction) -> error: string {
                     return make_error(vm, tprint("Attempt to LOAD_GLOBAL unknown value from '%'", instruction.load_global.name));
                 }
 
+                push_to_stack(*vm, value);
+            case .STORE_LOCAL;
+                value := pop_from_stack(*vm);
+
+                if instruction.store_local.slot >= vm.stack.count {
+                    array_resize(*vm.stack, instruction.store_local.slot + 1);
+                }
+
+                vm.stack[instruction.store_local.slot] = value;
+            case .LOAD_LOCAL;
+                if instruction.load_local.slot >= vm.stack.count {
+                    return make_error(vm, "Failed to LOAD_LOCAL because it's slot is bigger than the count of values in the stack");
+                }
+
+                value := vm.stack[instruction.load_local.slot];
                 push_to_stack(*vm, value);
         }
     }

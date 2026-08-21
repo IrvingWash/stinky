@@ -1,3 +1,5 @@
+// Compiles stinky code into a set of made up instructions
+
 compile :: (ast: Model.AST) -> error: string, [..]Instruction {
     push_allocator(temp);
 
@@ -50,12 +52,15 @@ pretty_print_code :: (code: [..]Instruction) {
 #scope_file
 
 Symbol :: struct {
-    name: string;
+    name:        string;
+    scope_depth: int;
 }
 
 Compiler :: struct {
     code:          [..]Instruction;
-    globals:       [..]Symbol;
+    globals:       [..]Symbol; // Right now we need this ONLY to make sure that an identifier was declared before it was used in an expression
+    locals:        [..]Symbol; // ^
+    scope_depth:   int;
     label_counter: int;
 }
 
@@ -115,12 +120,14 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) -> error: stri
                 },
             );
 
+            compiler.scope_depth += 1;
             for then_statement: node._if.then_statements {
                 error := compile_statement(then_statement, compiler);
                 if error {
                     return error;
                 }
             }
+            descope(compiler);
 
             array_add(
                 *compiler.code,
@@ -141,12 +148,14 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) -> error: stri
                 },
             );
 
-            for then_statement: node._if.else_statements {
-                error := compile_statement(then_statement, compiler);
+            compiler.scope_depth += 1;
+            for else_statement: node._if.else_statements {
+                error := compile_statement(else_statement, compiler);
                 if error {
                     return error;
                 }
             }
+            descope(compiler);
 
             array_add(
                 *compiler.code,
@@ -167,22 +176,43 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) -> error: stri
                 return error;
             }
 
-            ok, symbol := get_symbol(compiler, node.assignment.left.identifier.name);
+            ok, symbol, slot := get_symbol(compiler, node.assignment.left.identifier.name);
             if !ok {
-                symbol = Symbol.{ node.assignment.left.identifier.name };
+                symbol = Symbol.{
+                    name = node.assignment.left.identifier.name,
+                    scope_depth = compiler.scope_depth,
+                };
 
-                array_add(*compiler.globals, symbol);
+                if symbol.scope_depth > 0 {
+                    array_add(*compiler.locals, symbol);
+                    slot = compiler.locals.count - 1;
+                } else {
+                    array_add(*compiler.globals, symbol);
+                    slot = compiler.globals.count - 1;
+                }
             }
 
-            array_add(
-                *compiler.code,
-                Instruction.{
-                    kind = .STORE_GLOBAL,
-                    store_global = {
-                        name = symbol.name,
+            if symbol.scope_depth > 0 {
+                array_add(
+                    *compiler.code,
+                    Instruction.{
+                        kind = .STORE_LOCAL,
+                        store_local = {
+                            slot = slot,
+                        },
                     },
-                },
-            );
+                );
+            } else {
+                array_add(
+                    *compiler.code,
+                    Instruction.{
+                        kind = .STORE_GLOBAL,
+                        store_global = {
+                            name = symbol.name,
+                        },
+                    },
+                );
+            }
         case .LOCAL_ASSIGNMENT;
             assert(false, "local");
         case .WHILE;
@@ -436,20 +466,32 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) -> error: s
                 },
             );
         case .IDENTIFIER;
-            ok, symbol := get_symbol(compiler, node.identifier.name);
+            ok, symbol, slot := get_symbol(compiler, node.identifier.name);
             if !ok {
                 return make_error(tprint("Undeclared identifier %", node.identifier.name), node.identifier.line_number);
             }
 
-            array_add(
-                *compiler.code,
-                Instruction.{
-                    kind = .LOAD_GLOBAL,
-                    load_global = {
-                        name = symbol.name,
+            if symbol.scope_depth > 0 {
+                array_add(
+                    *compiler.code,
+                    Instruction.{
+                        kind = .LOAD_LOCAL,
+                        load_local = {
+                            slot = slot,
+                        },
                     },
-                },
-            );
+                );
+            } else {
+                array_add(
+                    *compiler.code,
+                    Instruction.{
+                        kind = .LOAD_GLOBAL,
+                        load_global = {
+                            name = symbol.name,
+                        },
+                    },
+                );
+            }
         case .FUNCTION_CALL;
             assert(false, "func call");
     }
@@ -463,14 +505,40 @@ add_label :: (compiler: *Compiler) -> string {
     return tprint("__LABEL_%", compiler.label_counter);
 }
 
-get_symbol :: (compiler: *Compiler, name: string) -> ok: bool, Symbol {
-    for symbol: compiler.globals {
+get_symbol :: (compiler: *Compiler, name: string) -> ok: bool, Symbol, slot: int {
+    for symbol: compiler.locals {
         if symbol.name == name {
-            return true, symbol;
+            return true, symbol, it_index;
         }
     }
 
-    return false, {};
+    for symbol: compiler.globals {
+        if symbol.name == name {
+            return true, symbol, it_index;
+        }
+    }
+
+    return false, {}, -1;
+}
+
+descope :: (compiler: *Compiler) {
+    compiler.scope_depth -= 1;
+
+    for < symbol: compiler.locals {
+        if compiler.scope_depth == symbol.scope_depth {
+            break;
+        }
+
+        remove symbol;
+
+        array_add(
+            *compiler.code,
+            Instruction.{
+                kind = .POP,
+                pop = {},
+            },
+        );
+    }
 }
 
 make_error :: (message: string, line_number: int) -> string {

@@ -1,3 +1,5 @@
+// stinky token definitions
+
 Token :: struct {
     type:        Token_Type;
     lexeme:      string;

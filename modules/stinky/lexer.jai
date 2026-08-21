@@ -1,3 +1,5 @@
+// Well, it's a lexer
+
 tokenize :: (source: string) -> error: string, [..]Token {
     push_allocator(temp);
 

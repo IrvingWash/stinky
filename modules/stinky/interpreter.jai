@@ -1,3 +1,5 @@
+// Tree-walking interpreter of stinky code
+
 Stinky_Type :: enum {
     NONE;
     NUMBER;
@@ -13,6 +15,8 @@ Stinky_Value :: union kind: Stinky_Type {
 }
 
 interpret :: (ast: Model.AST) -> error: string, Stinky_Value {
+    push_allocator(temp);
+
     environment: Environment;
     defer deinit(*environment.variables);
     defer deinit(*environment.functions);
