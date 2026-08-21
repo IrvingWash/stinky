@@ -3,6 +3,8 @@ execute :: (code: [..]Instruction) -> error: string {
 
     vm: Virtual_Machine;
 
+    initialize_label_positions(*vm, code);
+
     vm.is_running = true;
 
     while vm.is_running {
@@ -210,9 +212,20 @@ execute :: (code: [..]Instruction) -> error: string {
                     return make_vm_error(vm, "Unsupported operands for GE");
                 }
             case .NE;
-                return make_vm_error(vm, "Unsupported operands for NE");
+                rhs := pop_from_stack(*vm);
+                lhs := pop_from_stack(*vm);
+
+                if lhs.kind == .BOOL && rhs.kind == .BOOL {
+                    result := Value.{
+                        kind = .BOOL,
+                        _bool = lhs._bool ^ rhs._bool,
+                    };
+                    push_to_stack(*vm, result);
+                } else {
+                    return make_vm_error(vm, "Unsupported operands for XOR");
+                }
             case .LABEL;
-                print("Warning: Encountered a label: %\n", instruction.label.name);
+                // Do nothing;
             case .AND;
                 rhs := pop_from_stack(*vm);
                 lhs := pop_from_stack(*vm);
@@ -289,9 +302,22 @@ execute :: (code: [..]Instruction) -> error: string {
                     return make_vm_error(vm, "Unsupported operands for EQ");
                 }
             case .JMPZ;
-                assert(false, "JMPZ");
+                operand := pop_from_stack(*vm);
+                if operand.kind != .BOOL {
+                    return make_vm_error(vm, "Expected a BOOL for the JMPZ instruction");
+                }
+
+                if operand._bool == false {
+                    ok:, vm.pc = table_find(*vm.label_positions, instruction.jmpz.label_name);
+                    if !ok {
+                        return make_vm_error(vm, tprint("Attempt to JMPZ to a undeclared label '%'", instruction.jmpz.label_name));
+                    }
+                }
             case .JMP;
-                assert(false, "JMP");
+                ok:, vm.pc = table_find(*vm.label_positions, instruction.jmp.label_name);
+                if !ok {
+                    return make_vm_error(vm, tprint("Attempt to JMP to a undeclared label '%'", instruction.jmp.label_name));
+                }
         }
     }
 
@@ -302,8 +328,12 @@ execute :: (code: [..]Instruction) -> error: string {
 
 Virtual_Machine :: struct {
     stack:      [..]Value;
+
     pc:         int; // Program counter
     sp:         int; // Stack   pointer
+
+    label_positions: Table(string, int);
+
     is_running: bool;
 }
 
@@ -323,6 +353,15 @@ make_vm_error :: (vm: Virtual_Machine, message: string) -> string {
     return tprint("Runtime error (PC: '%'): %", vm.pc - 1, message);
 }
 
+initialize_label_positions :: (vm: *Virtual_Machine, code: [..]Instruction) {
+    for instruction: code {
+        if instruction.kind == .LABEL {
+            table_set(*vm.label_positions, instruction.label.name, it_index);
+        }
+    }
+}
+
 #import "Basic";
 #import "Math";
+#import "Hash_Table";
 #import,file "instructions.jai";
