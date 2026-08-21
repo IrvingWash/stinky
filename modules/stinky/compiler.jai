@@ -1,10 +1,10 @@
 compile :: (ast: Model.AST) -> [..]Instruction {
     push_allocator(temp);
 
-    code: [..]Instruction;
+    compiler: Compiler;
 
     array_add(
-        *code,
+        *compiler.code,
         Instruction.{
             kind = .LABEL,
             label = {
@@ -14,18 +14,18 @@ compile :: (ast: Model.AST) -> [..]Instruction {
     );
 
     for statement: ast.statements {
-        compile_statement(statement, *code);
+        compile_statement(statement, *compiler);
     }
 
     array_add(
-        *code,
+        *compiler.code,
         Instruction.{
             kind = .HALT,
             halt = {},
         },
     );
 
-    return code;
+    return compiler.code;
 }
 
 pretty_print_code :: (code: [..]Instruction) {
@@ -46,28 +46,93 @@ pretty_print_code :: (code: [..]Instruction) {
 
 #scope_file
 
-compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
+Compiler :: struct {
+    code:          [..]Instruction;
+    label_counter: int;
+}
+
+compile_statement :: (node: Model.Statement, compiler: *Compiler) {
     if #complete node.kind == {
         case .PRINT;
-            compile_expression(node.print.expression, code);
+            compile_expression(node.print.expression, compiler);
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PRINT,
                     print = {},
                 }
             );
         case .PRINTLN;
-            compile_expression(node.print.expression, code);
+            compile_expression(node.print.expression, compiler);
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PRINTLN,
                     println = {},
                 }
             );
         case .IF;
-            assert(false, "if");
+            compile_expression(node._if.test, compiler);
+
+            then_label := add_label(compiler);
+            else_label := add_label(compiler);
+            exit_label := add_label(compiler);
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .JMPZ,
+                    jmpz = {
+                        label_name = else_label,
+                    },
+                }
+            );
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = then_label,
+                    },
+                },
+            );
+
+            for then_statement: node._if.then_statements {
+                compile_statement(then_statement, compiler);
+            }
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .JMP,
+                    jmp = {
+                        label_name = exit_label,
+                    },
+                }
+            );
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = else_label,
+                    },
+                },
+            );
+
+            for then_statement: node._if.else_statements {
+                compile_statement(then_statement, compiler);
+            }
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = exit_label,
+                    },
+                },
+            );
         case .ASSIGNMENT;
             assert(false, "assignment");
         case .LOCAL_ASSIGNMENT;
@@ -87,11 +152,11 @@ compile_statement :: (node: Model.Statement, code: *[..]Instruction) {
     }
 }
 
-compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
+compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
     if #complete node.kind == {
         case .INTEGER;
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PUSH,
                     push = {
@@ -104,7 +169,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
             );
         case .FLOAT;
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PUSH,
                     push = {
@@ -116,12 +181,12 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                 },
             );
         case .BINARY_OPERATOR;
-            compile_expression(node.binary_operator.lhs, code);
-            compile_expression(node.binary_operator.rhs, code);
+            compile_expression(node.binary_operator.lhs, compiler);
+            compile_expression(node.binary_operator.rhs, compiler);
             if node.binary_operator.op.type == {
                 case .PLUS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .ADD,
                             add = {},
@@ -129,7 +194,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .MINUS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .SUB,
                             sub = {},
@@ -137,7 +202,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .STAR;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .MUL,
                             mul = {},
@@ -145,7 +210,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .SLASH;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .DIV,
                             div = {},
@@ -153,7 +218,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .MODULO;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .MOD,
                             mod = {},
@@ -161,7 +226,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .CARET;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .EXP,
                             exp = {},
@@ -169,7 +234,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .LESS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .LT,
                             lt = {},
@@ -177,7 +242,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .GREATER;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .GT,
                             gt = {},
@@ -185,7 +250,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .LESS_EQUALS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .LE,
                             le = {},
@@ -193,7 +258,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .GREATER_EQUALS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .GE,
                             ge = {},
@@ -201,7 +266,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .EQUALS_EQUALS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .EQ,
                             eq = {},
@@ -209,7 +274,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .NOT_EQUALS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .NE,
                             ne = {},
@@ -217,12 +282,12 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
             }
         case .LOGICAL_OPERATOR;
-            compile_expression(node.logical_operator.lhs, code);
-            compile_expression(node.logical_operator.rhs, code);
+            compile_expression(node.logical_operator.lhs, compiler);
+            compile_expression(node.logical_operator.rhs, compiler);
             if node.logical_operator.op.type == {
                 case .AND;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .AND,
                             and = {},
@@ -230,7 +295,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .OR;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .OR,
                             or = {},
@@ -238,12 +303,12 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
             }
         case .UNARY_OPERATOR;
-            compile_expression(node.unary_operator.operand, code);
+            compile_expression(node.unary_operator.operand, compiler);
 
             if node.unary_operator.op.type == {
                 case .NOT;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .PUSH,
                             push = {
@@ -255,7 +320,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                         },
                     );
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .XOR,
                             xor = {},
@@ -263,7 +328,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
                 case .MINUS;
                     array_add(
-                        code,
+                        *compiler.code,
                         Instruction.{
                             kind = .NEG,
                             neg = {},
@@ -271,10 +336,10 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
                     );
             }
         case .GROUPING;
-            compile_expression(node.grouping.expression, code);
+            compile_expression(node.grouping.expression, compiler);
         case .BOOL;
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PUSH,
                     push = {
@@ -287,7 +352,7 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
             );
         case .STRING;
             array_add(
-                code,
+                *compiler.code,
                 Instruction.{
                     kind = .PUSH,
                     push = {
@@ -303,6 +368,12 @@ compile_expression :: (node: *Model.Expression, code: *[..]Instruction) {
         case .FUNCTION_CALL;
             assert(false, "func call");
     }
+}
+
+add_label :: (compiler: *Compiler) -> string {
+    compiler.label_counter += 1;
+
+    return tprint("__LABEL_%", compiler.label_counter);
 }
 
 make_error :: (format_string: string, args: ..Any) -> string {

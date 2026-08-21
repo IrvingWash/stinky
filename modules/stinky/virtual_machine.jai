@@ -285,9 +285,13 @@ execute :: (code: [..]Instruction) -> error: string {
                         _bool = lhs._string == rhs._string,
                     };
                     push_to_stack(*vm, result);
-                }else {
+                } else {
                     return make_vm_error(vm, "Unsupported operands for EQ");
                 }
+            case .JMPZ;
+                assert(false, "JMPZ");
+            case .JMP;
+                assert(false, "JMP");
         }
     }
 

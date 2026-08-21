@@ -20,6 +20,8 @@ Instruction :: union kind: Instruction_Kind {
     .OR,,      or:      No_Operand_Instruction;
     .XOR,,     xor:     No_Operand_Instruction;
     .NEG,,     neg:     No_Operand_Instruction;
+    .JMPZ,,    jmpz:    Jump_Instruction;
+    .JMP,,     jmp:     Jump_Instruction;
 }
 
 Instruction_Kind :: enum {
@@ -44,6 +46,8 @@ Instruction_Kind :: enum {
     OR;
     XOR;
     NEG;
+    JMPZ;
+    JMP;
 }
 
 Push_Instruction :: struct {
@@ -54,6 +58,10 @@ No_Operand_Instruction :: struct {}
 
 Label_Instruction :: struct {
     name: string;
+}
+
+Jump_Instruction :: struct {
+    label_name: string;
 }
 
 Value :: union kind: Value_Type {
@@ -87,6 +95,12 @@ prettify_instruction :: (instruction: Instruction, builder: *String_Builder, dep
                 case .BOOL;
                     print(builder, "%\n", instruction.push.value._bool);
             }
+        case .JMPZ;
+            apply_depth(builder, depth.*);
+            print(builder, "JMPZ %\n", instruction.jmpz.label_name);
+        case .JMP;
+            apply_depth(builder, depth.*);
+            print(builder, "JMP %\n", instruction.jmp.label_name);
         case .ADD;
             apply_depth(builder, depth.*);
             print(builder, "ADD\n");
@@ -130,7 +144,7 @@ prettify_instruction :: (instruction: Instruction, builder: *String_Builder, dep
             apply_depth(builder, depth.*);
             print(builder, "NE\n");
         case .LABEL;
-            depth.* += 1;
+            depth.* = 1;
             print(builder, "%:\n", instruction.label.name);
         case .HALT;
             apply_depth(builder, depth.*);
