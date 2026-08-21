@@ -52,7 +52,10 @@ run :: (source: string, verbose: bool, mode: Mode) -> error: string, value: Inte
             if verbose {
                 print("=== Compiling the program for the VM ===\n");
             }
-            code := Compiler.compile(ast);
+            error, code := Compiler.compile(ast);
+            if error {
+                return error, {};
+            }
             if verbose {
                 Compiler.pretty_print_code(code);
             }

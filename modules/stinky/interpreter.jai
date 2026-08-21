@@ -30,9 +30,6 @@ Environment :: struct {
     variables: Table(string, Stinky_Value);
     functions: Table(string, Stinky_Function);
     parent:    *Environment;
-
-    variables.allocator = temp; // @Todo: maybe we can come up with something more interesting
-    functions.allocator = temp;
 }
 
 Stinky_Function :: struct {

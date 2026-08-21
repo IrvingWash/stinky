@@ -9,7 +9,7 @@ execute :: (code: [..]Instruction) -> error: string {
 
     while vm.is_running {
         if vm.pc >= code.count {
-            make_vm_error(vm, "Reached the last instruction, but didn't found the program end indicated by a HALT");
+            make_error(vm, "Reached the last instruction, but didn't found the program end indicated by a HALT");
         }
 
         instruction := code[vm.pc];
@@ -72,7 +72,7 @@ execute :: (code: [..]Instruction) -> error: string {
                             push_to_stack(*vm, result);
                     }
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for ADD");
+                    return make_error(vm, "Unsupported operands for ADD");
                 }
             case .SUB;
                 rhs := pop_from_stack(*vm);
@@ -85,7 +85,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for SUB");
+                    return make_error(vm, "Unsupported operands for SUB");
                 }
             case .PRINT;
                 value := pop_from_stack(*vm);
@@ -118,7 +118,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for MUL");
+                    return make_error(vm, "Unsupported operands for MUL");
                 }
             case .DIV;
                 rhs := pop_from_stack(*vm);
@@ -131,7 +131,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for DIV");
+                    return make_error(vm, "Unsupported operands for DIV");
                 }
             case .MOD;
                 rhs := pop_from_stack(*vm);
@@ -144,7 +144,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for MOD");
+                    return make_error(vm, "Unsupported operands for MOD");
                 }
             case .EXP;
                 rhs := pop_from_stack(*vm);
@@ -157,7 +157,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for EXP");
+                    return make_error(vm, "Unsupported operands for EXP");
                 }
             case .LT;
                 rhs := pop_from_stack(*vm);
@@ -170,7 +170,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for LT");
+                    return make_error(vm, "Unsupported operands for LT");
                 }
             case .GT;
                 rhs := pop_from_stack(*vm);
@@ -183,7 +183,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for GT");
+                    return make_error(vm, "Unsupported operands for GT");
                 }
             case .LE;
                 rhs := pop_from_stack(*vm);
@@ -196,7 +196,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for LE");
+                    return make_error(vm, "Unsupported operands for LE");
                 }
             case .GE;
                 rhs := pop_from_stack(*vm);
@@ -209,7 +209,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for GE");
+                    return make_error(vm, "Unsupported operands for GE");
                 }
             case .NE;
                 rhs := pop_from_stack(*vm);
@@ -222,7 +222,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for XOR");
+                    return make_error(vm, "Unsupported operands for XOR");
                 }
             case .LABEL;
                 // Do nothing;
@@ -237,7 +237,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for AND");
+                    return make_error(vm, "Unsupported operands for AND");
                 }
             case .OR;
                 rhs := pop_from_stack(*vm);
@@ -250,7 +250,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for OR");
+                    return make_error(vm, "Unsupported operands for OR");
                 }
             case .XOR;
                 rhs := pop_from_stack(*vm);
@@ -263,7 +263,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for XOR");
+                    return make_error(vm, "Unsupported operands for XOR");
                 }
             case .NEG;
                 value := pop_from_stack(*vm);
@@ -274,7 +274,7 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for NEG");
+                    return make_error(vm, "Unsupported operands for NEG");
                 }
             case .EQ;
                 rhs := pop_from_stack(*vm);
@@ -299,25 +299,35 @@ execute :: (code: [..]Instruction) -> error: string {
                     };
                     push_to_stack(*vm, result);
                 } else {
-                    return make_vm_error(vm, "Unsupported operands for EQ");
+                    return make_error(vm, "Unsupported operands for EQ");
                 }
             case .JMPZ;
                 operand := pop_from_stack(*vm);
                 if operand.kind != .BOOL {
-                    return make_vm_error(vm, "Expected a BOOL for the JMPZ instruction");
+                    return make_error(vm, "Expected a BOOL for the JMPZ instruction");
                 }
 
                 if operand._bool == false {
                     ok:, vm.pc = table_find(*vm.label_positions, instruction.jmpz.label_name);
                     if !ok {
-                        return make_vm_error(vm, tprint("Attempt to JMPZ to a undeclared label '%'", instruction.jmpz.label_name));
+                        return make_error(vm, tprint("Attempt to JMPZ to a undeclared label '%'", instruction.jmpz.label_name));
                     }
                 }
             case .JMP;
                 ok:, vm.pc = table_find(*vm.label_positions, instruction.jmp.label_name);
                 if !ok {
-                    return make_vm_error(vm, tprint("Attempt to JMP to a undeclared label '%'", instruction.jmp.label_name));
+                    return make_error(vm, tprint("Attempt to JMP to a undeclared label '%'", instruction.jmp.label_name));
                 }
+            case .STORE_GLOBAL;
+                value := pop_from_stack(*vm);
+                table_set(*vm.globals, instruction.store_global.name, value);
+            case .LOAD_GLOBAL;
+                ok, value := table_find(*vm.globals, instruction.load_global.name);
+                if !ok {
+                    return make_error(vm, tprint("Attempt to LOAD_GLOBAL unknown value from '%'", instruction.load_global.name));
+                }
+
+                push_to_stack(*vm, value);
         }
     }
 
@@ -334,6 +344,8 @@ Virtual_Machine :: struct {
 
     label_positions: Table(string, int);
 
+    globals: Table(string, Value);
+
     is_running: bool;
 }
 
@@ -349,7 +361,7 @@ pop_from_stack :: (vm: *Virtual_Machine) -> Value {
     return value;
 }
 
-make_vm_error :: (vm: Virtual_Machine, message: string) -> string {
+make_error :: (vm: Virtual_Machine, message: string) -> string {
     return tprint("Runtime error (PC: '%'): %", vm.pc - 1, message);
 }
 

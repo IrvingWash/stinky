@@ -1,4 +1,4 @@
-compile :: (ast: Model.AST) -> [..]Instruction {
+compile :: (ast: Model.AST) -> error: string, [..]Instruction {
     push_allocator(temp);
 
     compiler: Compiler;
@@ -14,7 +14,10 @@ compile :: (ast: Model.AST) -> [..]Instruction {
     );
 
     for statement: ast.statements {
-        compile_statement(statement, *compiler);
+        error := compile_statement(statement, *compiler);
+        if error {
+            return error, compiler.code;
+        }
     }
 
     array_add(
@@ -25,7 +28,7 @@ compile :: (ast: Model.AST) -> [..]Instruction {
         },
     );
 
-    return compiler.code;
+    return "", compiler.code;
 }
 
 pretty_print_code :: (code: [..]Instruction) {
@@ -46,15 +49,24 @@ pretty_print_code :: (code: [..]Instruction) {
 
 #scope_file
 
+Symbol :: struct {
+    name: string;
+}
+
 Compiler :: struct {
     code:          [..]Instruction;
+    globals:       [..]Symbol;
     label_counter: int;
 }
 
-compile_statement :: (node: Model.Statement, compiler: *Compiler) {
+compile_statement :: (node: Model.Statement, compiler: *Compiler) -> error: string {
     if #complete node.kind == {
         case .PRINT;
-            compile_expression(node.print.expression, compiler);
+            error := compile_expression(node.print.expression, compiler);
+            if error {
+                return error;
+            }
+
             array_add(
                 *compiler.code,
                 Instruction.{
@@ -63,7 +75,10 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
                 }
             );
         case .PRINTLN;
-            compile_expression(node.print.expression, compiler);
+            error := compile_expression(node.println.expression, compiler);
+            if error {
+                return error;
+            }
             array_add(
                 *compiler.code,
                 Instruction.{
@@ -72,7 +87,10 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
                 }
             );
         case .IF;
-            compile_expression(node._if.test, compiler);
+            error := compile_expression(node._if.test, compiler);
+            if error {
+                return error;
+            }
 
             then_label := add_label(compiler);
             else_label := add_label(compiler);
@@ -98,7 +116,10 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
             );
 
             for then_statement: node._if.then_statements {
-                compile_statement(then_statement, compiler);
+                error := compile_statement(then_statement, compiler);
+                if error {
+                    return error;
+                }
             }
 
             array_add(
@@ -121,7 +142,10 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
             );
 
             for then_statement: node._if.else_statements {
-                compile_statement(then_statement, compiler);
+                error := compile_statement(then_statement, compiler);
+                if error {
+                    return error;
+                }
             }
 
             array_add(
@@ -134,7 +158,31 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
                 },
             );
         case .ASSIGNMENT;
-            assert(false, "assignment");
+            if node.assignment.left.kind != .IDENTIFIER {
+                return make_error("Expected the left hand side of an assignment to be an identifier", node.assignment.line_number);
+            }
+
+            error := compile_expression(node.assignment.right, compiler);
+            if error {
+                return error;
+            }
+
+            ok, symbol := get_symbol(compiler, node.assignment.left.identifier.name);
+            if !ok {
+                symbol = Symbol.{ node.assignment.left.identifier.name };
+
+                array_add(*compiler.globals, symbol);
+            }
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .STORE_GLOBAL,
+                    store_global = {
+                        name = symbol.name,
+                    },
+                },
+            );
         case .LOCAL_ASSIGNMENT;
             assert(false, "local");
         case .WHILE;
@@ -150,9 +198,11 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) {
         case .RETURN;
             assert(false, "return");
     }
+
+    return "";
 }
 
-compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
+compile_expression :: (node: *Model.Expression, compiler: *Compiler) -> error: string {
     if #complete node.kind == {
         case .INTEGER;
             array_add(
@@ -181,8 +231,16 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
                 },
             );
         case .BINARY_OPERATOR;
-            compile_expression(node.binary_operator.lhs, compiler);
-            compile_expression(node.binary_operator.rhs, compiler);
+            error := compile_expression(node.binary_operator.lhs, compiler);
+            if error {
+                return error;
+            }
+
+            error = compile_expression(node.binary_operator.rhs, compiler);
+            if error {
+                return error;
+            }
+
             if node.binary_operator.op.type == {
                 case .PLUS;
                     array_add(
@@ -282,8 +340,16 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
                     );
             }
         case .LOGICAL_OPERATOR;
-            compile_expression(node.logical_operator.lhs, compiler);
-            compile_expression(node.logical_operator.rhs, compiler);
+            error := compile_expression(node.logical_operator.lhs, compiler);
+            if error {
+                return error;
+            }
+
+            error = compile_expression(node.logical_operator.rhs, compiler);
+            if error {
+                return error;
+            }
+
             if node.logical_operator.op.type == {
                 case .AND;
                     array_add(
@@ -303,7 +369,10 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
                     );
             }
         case .UNARY_OPERATOR;
-            compile_expression(node.unary_operator.operand, compiler);
+            error := compile_expression(node.unary_operator.operand, compiler);
+            if error {
+                return error;
+            }
 
             if node.unary_operator.op.type == {
                 case .NOT;
@@ -336,7 +405,10 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
                     );
             }
         case .GROUPING;
-            compile_expression(node.grouping.expression, compiler);
+            error := compile_expression(node.grouping.expression, compiler);
+            if error {
+                return error;
+            }
         case .BOOL;
             array_add(
                 *compiler.code,
@@ -364,10 +436,25 @@ compile_expression :: (node: *Model.Expression, compiler: *Compiler) {
                 },
             );
         case .IDENTIFIER;
-            assert(false, "ident");
+            ok, symbol := get_symbol(compiler, node.identifier.name);
+            if !ok {
+                return make_error(tprint("Undeclared identifier %", node.identifier.name), node.identifier.line_number);
+            }
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LOAD_GLOBAL,
+                    load_global = {
+                        name = symbol.name,
+                    },
+                },
+            );
         case .FUNCTION_CALL;
             assert(false, "func call");
     }
+
+    return "";
 }
 
 add_label :: (compiler: *Compiler) -> string {
@@ -376,8 +463,18 @@ add_label :: (compiler: *Compiler) -> string {
     return tprint("__LABEL_%", compiler.label_counter);
 }
 
-make_error :: (format_string: string, args: ..Any) -> string {
-    return tprint(format_string, args);
+get_symbol :: (compiler: *Compiler, name: string) -> ok: bool, Symbol {
+    for symbol: compiler.globals {
+        if symbol.name == name {
+            return true, symbol;
+        }
+    }
+
+    return false, {};
+}
+
+make_error :: (message: string, line_number: int) -> string {
+    return tprint("Compilation error (line %): %", line_number, message);
 }
 
 #import "Basic";

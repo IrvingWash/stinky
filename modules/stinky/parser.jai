@@ -148,7 +148,7 @@ get_print_statement :: (tokens: []Token, current_index: *int) -> error: string, 
         return "", statement;
     }
 
-    return make_parsing_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
+    return make_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
 }
 
 // <println_statement> ::= "println" <expression>
@@ -168,7 +168,7 @@ get_println_statement :: (tokens: []Token, current_index: *int) -> error: string
         return "", statement;
     }
 
-    return make_parsing_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
+    return make_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
 }
 
 // <if_statement> ::= 'if' <expression> 'then' <statement>* (else <statement>*)? 'end'
@@ -348,7 +348,7 @@ get_function_declaration :: (tokens: []Token, current_index: *int) -> error: str
         return error, .{};
     }
     if name.type != .IDENTIFIER {
-        return make_parsing_error("Expected an identifier after 'func'", line_number),
+        return make_error("Expected an identifier after 'func'", line_number),
             .{};
     }
     current_index.* += 1;
@@ -422,7 +422,7 @@ get_local_assignment :: (tokens: []Token, current_index: *int) -> error: string,
         return error, .{};
     }
     if lhs.kind != .IDENTIFIER {
-        return make_parsing_error("Expected an identifier after 'local'", tokens[current_index.* - 1].line_number),
+        return make_error("Expected an identifier after 'local'", tokens[current_index.* - 1].line_number),
             .{};
     }
 
@@ -452,13 +452,13 @@ get_parameters :: (tokens: []Token, current_index: *int) -> error: string, [..]M
     parameters: [..]Model.Statement;
     while current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
         if parameters.count >= MAX_PARAMS_COUNT {
-            return make_parsing_error("Too many parameters", tokens[current_index.*].line_number),
+            return make_error("Too many parameters", tokens[current_index.*].line_number),
                 parameters;
         }
 
         name := tokens[current_index.*];
         if name.type != .IDENTIFIER {
-            return make_parsing_error("Expected an identifier", tokens[current_index.*].line_number),
+            return make_error("Expected an identifier", tokens[current_index.*].line_number),
                 parameters;
         }
         current_index.* += 1;
@@ -803,7 +803,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
     expression := New(Model.Expression);
 
     if current_index.* >= tokens.count {
-        return make_parsing_error("Expected a primary expression", peek_pointer(tokens).line_number),
+        return make_error("Expected a primary expression", peek_pointer(tokens).line_number),
             null;
     }
 
@@ -891,7 +891,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
                 current_index.* >= tokens.count
                 || tokens[current_index.*].type != .R_PAREN
             ) {
-                return make_parsing_error("Unterminated paren", starting_token.line_number),
+                return make_error("Unterminated paren", starting_token.line_number),
                     null;
             }
             current_index.* += 1;
@@ -902,7 +902,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case;
-            return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
+            return make_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
                 null;
     }
 
@@ -933,10 +933,10 @@ get_arguments :: (tokens: []Token, current_index: *int) -> error: string, [..]*M
 
 try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index: *int) -> error: string {
     if current_index.* >= tokens.count {
-        return make_parsing_error(tprint("Expected a stinky % statement, but reached the end of the file", token_type), peek_pointer(tokens).line_number);
+        return make_error(tprint("Expected a stinky % statement, but reached the end of the file", token_type), peek_pointer(tokens).line_number);
     }
     if tokens[current_index.*].type != token_type {
-        return make_parsing_error(tprint("Expected a stinky % statement", token_type), tokens[current_index.*].line_number);
+        return make_error(tprint("Expected a stinky % statement", token_type), tokens[current_index.*].line_number);
     }
 
     current_index.* += 1;
@@ -944,7 +944,7 @@ try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index:
     return "";
 }
 
-make_parsing_error :: (error: string, line_number: int) -> string {
+make_error :: (error: string, line_number: int) -> string {
     return tprint("Parsing error on line %: %", line_number, error);
 }
 

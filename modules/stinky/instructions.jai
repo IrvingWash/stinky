@@ -1,27 +1,29 @@
 Instruction :: union kind: Instruction_Kind {
-    .PUSH,,    push:    Push_Instruction;
-    .ADD,,     add:     No_Operand_Instruction;
-    .SUB,,     sub:     No_Operand_Instruction;
-    .PRINT,,   print:   No_Operand_Instruction;
-    .PRINTLN,, println: No_Operand_Instruction;
-    .MUL,,     mul:     No_Operand_Instruction;
-    .DIV,,     div:     No_Operand_Instruction;
-    .MOD,,     mod:     No_Operand_Instruction;
-    .EXP,,     exp:     No_Operand_Instruction;
-    .LT,,      lt:      No_Operand_Instruction;
-    .GT,,      gt:      No_Operand_Instruction;
-    .LE,,      le:      No_Operand_Instruction;
-    .GE,,      ge:      No_Operand_Instruction;
-    .EQ,,      eq:      No_Operand_Instruction;
-    .NE,,      ne:      No_Operand_Instruction;
-    .LABEL,,   label:   Label_Instruction;
-    .HALT,,    halt:    No_Operand_Instruction;
-    .AND,,     and:     No_Operand_Instruction;
-    .OR,,      or:      No_Operand_Instruction;
-    .XOR,,     xor:     No_Operand_Instruction;
-    .NEG,,     neg:     No_Operand_Instruction;
-    .JMPZ,,    jmpz:    Jump_Instruction;
-    .JMP,,     jmp:     Jump_Instruction;
+    .PUSH,,         push:         Push_Instruction;
+    .ADD,,          add:          No_Operand_Instruction;
+    .SUB,,          sub:          No_Operand_Instruction;
+    .PRINT,,        print:        No_Operand_Instruction;
+    .PRINTLN,,      println:      No_Operand_Instruction;
+    .MUL,,          mul:          No_Operand_Instruction;
+    .DIV,,          div:          No_Operand_Instruction;
+    .MOD,,          mod:          No_Operand_Instruction;
+    .EXP,,          exp:          No_Operand_Instruction;
+    .LT,,           lt:           No_Operand_Instruction;
+    .GT,,           gt:           No_Operand_Instruction;
+    .LE,,           le:           No_Operand_Instruction;
+    .GE,,           ge:           No_Operand_Instruction;
+    .EQ,,           eq:           No_Operand_Instruction;
+    .NE,,           ne:           No_Operand_Instruction;
+    .LABEL,,        label:        Label_Instruction;
+    .HALT,,         halt:         No_Operand_Instruction;
+    .AND,,          and:          No_Operand_Instruction;
+    .OR,,           or:           No_Operand_Instruction;
+    .XOR,,          xor:          No_Operand_Instruction;
+    .NEG,,          neg:          No_Operand_Instruction;
+    .JMPZ,,         jmpz:         Jump_Instruction;
+    .JMP,,          jmp:          Jump_Instruction;
+    .STORE_GLOBAL,, store_global: Store_Global_Instruction;
+    .LOAD_GLOBAL,,  load_global:  Load_Global_Instruction;
 }
 
 Instruction_Kind :: enum {
@@ -48,6 +50,8 @@ Instruction_Kind :: enum {
     NEG;
     JMPZ;
     JMP;
+    STORE_GLOBAL;
+    LOAD_GLOBAL;
 }
 
 Push_Instruction :: struct {
@@ -62,6 +66,14 @@ Label_Instruction :: struct {
 
 Jump_Instruction :: struct {
     label_name: string;
+}
+
+Store_Global_Instruction :: struct {
+    name: string;
+}
+
+Load_Global_Instruction :: struct {
+    name: string;
 }
 
 Value :: union kind: Value_Type {
@@ -161,6 +173,12 @@ prettify_instruction :: (instruction: Instruction, builder: *String_Builder, dep
         case .NEG;
             apply_depth(builder, depth.*);
             print(builder, "NEG\n");
+        case .STORE_GLOBAL;
+            apply_depth(builder, depth.*);
+            print(builder, "STORE_GLOBAL %\n", instruction.store_global.name);
+        case .LOAD_GLOBAL;
+            apply_depth(builder, depth.*);
+            print(builder, "LOAD_GLOBAL %\n", instruction.load_global.name);
     }
 }
 

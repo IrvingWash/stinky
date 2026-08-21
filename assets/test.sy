@@ -1,25 +1,11 @@
-println (2 + 3) * 5 - 1     -- 24
-println true                -- true
-println 1 == 2              -- false
-println ~(3 > 2) or true    -- true
+x := 100
+y := 200
+z := 300
 
-if 3 >= 0 then
-    println "Entered the then block"
-else
-    println "Entered the else block"
-end
+println x
+println y
+println z
 
-println "See you"
+a := x + 1
 
-println "================================================================================"
-
-println true == true
-println true == false
-println false == true
-println false == false
-println true ~= true
-println true ~= false
-println false ~= true
-println false ~= false
-println 3 > 2 ~= false
-println "a" + "b" == "ab"
+println a
