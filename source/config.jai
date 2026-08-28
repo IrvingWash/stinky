@@ -1,10 +1,13 @@
 Config :: struct {
     file_path: string;
-    verbose: bool;
+    verbose:   bool;
+    mode:      stinky.Mode;
 }
 
 Possible_Flags :: struct {
-    VERBOSE :: "--verbose";
+    VERBOSE          :: "--verbose";
+    MODE_VM          :: "--vm";
+    MODE_INTERPRETER :: "--interpreter";
 }
 
 make_config_from_arguments :: () -> error: string, Config {
@@ -20,6 +23,10 @@ make_config_from_arguments :: () -> error: string, Config {
         if flag == {
             case Possible_Flags.VERBOSE;
                 config.verbose = true;
+            case Possible_Flags.MODE_VM;
+                config.mode = .VM;
+            case Possible_Flags.MODE_INTERPRETER;
+                config.mode = .INTERPRETER;
             case;
                 return tprint("Unknown flag '%'", flag), config;
         }
@@ -37,3 +44,4 @@ destroy_config :: (config: Config) {
 #scope_file
 
 #import "Basic";
+stinky :: #import "stinky";

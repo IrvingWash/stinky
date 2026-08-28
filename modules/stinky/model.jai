@@ -1,6 +1,7 @@
+// AST node definitions
+
 AST :: struct {
     statements: [..]Statement;
-    allocator:  Allocator;
 }
 
 Node :: struct {
@@ -9,17 +10,17 @@ Node :: struct {
 
 Statement :: union kind: Statement_Kind {
     #as using node: Node;
-    .PRINT,,                   print_statement:         Print_Statement;
-    .PRINTLN,,                 println_statement:       Println_Statement;
-    .IF,,                      if_statement:            If_Statement;
-    .ASSIGNMENT,,              assignment:              Assignment;
-    .LOCAL_ASSIGNMENT,,        local_assignment:        Local_Assignment;
-    .WHILE,,                   while_statement:         While_Statement;
-    .FOR,,                     for_statement:           For_Statement;
-    .FUNCTION_DECLARATION,,    function_declaration:    Function_Declaration;
-    .PARAMETER_DECLARATION,,   parameter_declaration:   Parameter_Declaration;
-    .FUNCTION_CALL_STATEMENT,, function_call_statement: Function_Call_Statement;
-    .RETURN_STATEMENT,,        return_statement:        Return_Statement;
+    .PRINT,,                 print:                 Print_Statement;
+    .PRINTLN,,               println:               Println_Statement;
+    .IF,,                    _if:                   If_Statement;
+    .ASSIGNMENT,,            assignment:            Assignment;
+    .LOCAL_ASSIGNMENT,,      local_assignment:      Local_Assignment;
+    .WHILE,,                 _while:                While_Statement;
+    .FOR,,                   _for:                  For_Statement;
+    .FUNCTION_DECLARATION,,  function_declaration:  Function_Declaration;
+    .PARAMETER_DECLARATION,, parameter_declaration: Parameter_Declaration;
+    .FUNCTION_CALL,,         function_call:         Function_Call_Statement;
+    .RETURN,,                _return:               Return_Statement;
 };
 
 Expression :: union kind: Expression_Kind {
@@ -45,8 +46,8 @@ Statement_Kind :: enum {
     FOR;
     FUNCTION_DECLARATION;
     PARAMETER_DECLARATION;
-    FUNCTION_CALL_STATEMENT;
-    RETURN_STATEMENT;
+    FUNCTION_CALL;
+    RETURN;
 }
 
 Expression_Kind :: enum {

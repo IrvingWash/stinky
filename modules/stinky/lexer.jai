@@ -1,8 +1,12 @@
+// Well, it's a lexer
+
 tokenize :: (source: string) -> error: string, [..]Token {
+    push_allocator(temp);
+
     tokens: [..]Token;
 
     if source.count < 1 {
-        return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"result := 69 + 420\"", tokens;
+        return "Your stinky code file is empty. Try to add some expressions and statements. E.g. \"return 69 + 420\"", tokens;
     }
 
     line_number:  u32 = 1;
@@ -109,7 +113,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
                     next += 1;
 
                     if next >= source.count {
-                        return make_tokenizing_error(tprint("Unterminated string literal '%'", make_lexeme(source, start, next)), line_number),
+                        return make_error(tprint("Unterminated string literal '%'", make_lexeme(source, start, next)), line_number),
                             tokens;
                     }
                 }
@@ -163,7 +167,7 @@ tokenize :: (source: string) -> error: string, [..]Token {
         }
 
         if token_type == .UNKNOWN {
-            return make_tokenizing_error(tprint("Unexpected token '%'", lexeme), line_number),
+            return make_error(tprint("Unexpected token '%'", lexeme), line_number),
                 tokens;
         }
 
@@ -206,8 +210,8 @@ make_lexeme :: (source: string, start: s32, last: s32) -> string {
     return string.{ last - start, *source[start] };
 }
 
-make_tokenizing_error :: (error: string, line_number: int) -> string {
-    return tprint("Tokenizing error on line %: %", line_number, error);
+make_error :: (error: string, line_number: int) -> string {
+    return tprint("Tokenizing error (line %): %", line_number, error);
 }
 
 #import "Basic";

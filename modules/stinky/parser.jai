@@ -1,3 +1,5 @@
+// Well, it's a parser
+
 make_ast :: (tokens: []Token) -> error: string, Model.AST {
     if tokens.count < 1 {
         return "Your stinky code doesn't contain any tokens, so we are unable to parse them, sorry!", {};
@@ -5,26 +7,13 @@ make_ast :: (tokens: []Token) -> error: string, Model.AST {
 
     ast: Model.AST;
 
-    pool := New(Flat_Pool);
-    ast.allocator = {
-        proc = flat_pool_allocator_proc,
-        data = pool,
-    };
-
-    push_allocator(ast.allocator);
+    push_allocator(temp);
 
     current_index: int;
 
     error:, ast.statements = get_program(tokens, *current_index);
 
     return error, ast;
-}
-
-destroy_ast :: (ast: *Model.AST) {
-    fini(ast.allocator.data);
-    free(ast.allocator.data);
-
-    ast.* = {};
 }
 
 pretty_print_ast :: (ast: Model.AST) {
@@ -134,12 +123,12 @@ get_statement :: (tokens: []Token, current_index: *int) -> error: string, Model.
 
                 return "", assignment;
             } else {
-                function_call_statement: Model.Statement;
-                function_call_statement.kind = .FUNCTION_CALL_STATEMENT;
-                function_call_statement.function_call_statement.expression = left;
-                function_call_statement.function_call_statement.line_number = tokens[current_index.* - 1].line_number;
+                statement: Model.Statement;
+                statement.kind = .FUNCTION_CALL;
+                statement.function_call.expression = left;
+                statement.function_call.line_number = tokens[current_index.* - 1].line_number;
 
-                return "", function_call_statement;
+                return "", statement;
             }
     }
 }
@@ -155,13 +144,13 @@ get_print_statement :: (tokens: []Token, current_index: *int) -> error: string, 
 
         statement: Model.Statement;
         statement.kind = .PRINT;
-        statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.expression = expression;
+        statement.print.line_number = tokens[current_index.* - 1].line_number;
+        statement.print.expression = expression;
 
         return "", statement;
     }
 
-    return make_parsing_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
+    return make_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
 }
 
 // <println_statement> ::= "println" <expression>
@@ -175,13 +164,13 @@ get_println_statement :: (tokens: []Token, current_index: *int) -> error: string
 
         statement: Model.Statement;
         statement.kind = .PRINTLN;
-        statement.print_statement.line_number = tokens[current_index.* - 1].line_number;
-        statement.print_statement.expression = expression;
+        statement.print.line_number = tokens[current_index.* - 1].line_number;
+        statement.print.expression = expression;
 
         return "", statement;
     }
 
-    return make_parsing_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
+    return make_error("Expected a stinky print statement", tokens[current_index.*].line_number), .{};
 }
 
 // <if_statement> ::= 'if' <expression> 'then' <statement>* (else <statement>*)? 'end'
@@ -228,10 +217,10 @@ get_if_statement :: (tokens: []Token, current_index: *int) -> error: string, Mod
 
     statement: Model.Statement;
     statement.kind = .IF;
-    statement.if_statement.test = test;
-    statement.if_statement.then_statements = then_statements;
-    statement.if_statement.else_statements = else_statements;
-    statement.if_statement.line_number = line_number;
+    statement._if.test = test;
+    statement._if.then_statements = then_statements;
+    statement._if.else_statements = else_statements;
+    statement._if.line_number = line_number;
 
     return "", statement;
 }
@@ -269,9 +258,9 @@ get_while_statement :: (tokens: []Token, current_index: *int) -> error: string, 
 
     statement: Model.Statement;
     statement.kind = .WHILE;
-    statement.while_statement.test = test;
-    statement.while_statement.statements = while_statements;
-    statement.while_statement.line_number = line_number;
+    statement._while.test = test;
+    statement._while.statements = while_statements;
+    statement._while.line_number = line_number;
 
     return "", statement;
 }
@@ -337,12 +326,12 @@ get_for_statement :: (tokens: []Token, current_index: *int) -> error: string, Mo
 
     statement: Model.Statement;
     statement.kind = .FOR;
-    statement.for_statement.line_number = line_number;
-    statement.for_statement.identifier = identifier;
-    statement.for_statement.start = start;
-    statement.for_statement.end = end;
-    statement.for_statement.step = step;
-    statement.for_statement.statements = for_statements;
+    statement._for.line_number = line_number;
+    statement._for.identifier = identifier;
+    statement._for.start = start;
+    statement._for.end = end;
+    statement._for.step = step;
+    statement._for.statements = for_statements;
 
     return "", statement;
 }
@@ -361,7 +350,7 @@ get_function_declaration :: (tokens: []Token, current_index: *int) -> error: str
         return error, .{};
     }
     if name.type != .IDENTIFIER {
-        return make_parsing_error("Expected an identifier after 'func'", line_number),
+        return make_error("Expected an identifier after 'func'", line_number),
             .{};
     }
     current_index.* += 1;
@@ -413,12 +402,12 @@ get_return_statement :: (tokens: []Token, current_index: *int) -> error: string,
         return error, .{};
     }
 
-    return_statement: Model.Statement;
-    return_statement.kind = .RETURN_STATEMENT;
-    return_statement.return_statement.line_number = tokens[current_index.* - 1].line_number;
-    return_statement.return_statement.expression = expression;
+    statement: Model.Statement;
+    statement.kind = .RETURN;
+    statement._return.line_number = tokens[current_index.* - 1].line_number;
+    statement._return.expression = expression;
 
-    return "", return_statement;
+    return "", statement;
 }
 
 // <local_assignment> ::= 'local' <assignement>
@@ -435,7 +424,7 @@ get_local_assignment :: (tokens: []Token, current_index: *int) -> error: string,
         return error, .{};
     }
     if lhs.kind != .IDENTIFIER {
-        return make_parsing_error("Expected an identifier after 'local'", tokens[current_index.* - 1].line_number),
+        return make_error("Expected an identifier after 'local'", tokens[current_index.* - 1].line_number),
             .{};
     }
 
@@ -465,13 +454,13 @@ get_parameters :: (tokens: []Token, current_index: *int) -> error: string, [..]M
     parameters: [..]Model.Statement;
     while current_index.* < tokens.count && tokens[current_index.*].type != .R_PAREN {
         if parameters.count >= MAX_PARAMS_COUNT {
-            return make_parsing_error("Too many parameters", tokens[current_index.*].line_number),
+            return make_error("Too many parameters", tokens[current_index.*].line_number),
                 parameters;
         }
 
         name := tokens[current_index.*];
         if name.type != .IDENTIFIER {
-            return make_parsing_error("Expected an identifier", tokens[current_index.*].line_number),
+            return make_error("Expected an identifier", tokens[current_index.*].line_number),
                 parameters;
         }
         current_index.* += 1;
@@ -816,7 +805,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
     expression := New(Model.Expression);
 
     if current_index.* >= tokens.count {
-        return make_parsing_error("Expected a primary expression", peek_pointer(tokens).line_number),
+        return make_error("Expected a primary expression", peek_pointer(tokens).line_number),
             null;
     }
 
@@ -904,7 +893,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
                 current_index.* >= tokens.count
                 || tokens[current_index.*].type != .R_PAREN
             ) {
-                return make_parsing_error("Unterminated paren", starting_token.line_number),
+                return make_error("Unterminated paren", starting_token.line_number),
                     null;
             }
             current_index.* += 1;
@@ -915,7 +904,7 @@ get_primary :: (tokens: []Token, current_index: *int) -> error: string, *Model.E
                 line_number = tokens[current_index.* - 1].line_number,
             };
         case;
-            return make_parsing_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
+            return make_error("Unexpected error while trying to parse a primary expression", starting_token.line_number),
                 null;
     }
 
@@ -946,10 +935,10 @@ get_arguments :: (tokens: []Token, current_index: *int) -> error: string, [..]*M
 
 try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index: *int) -> error: string {
     if current_index.* >= tokens.count {
-        return make_parsing_error(tprint("Expected a stinky % statement, but reached the end of the file", token_type), peek_pointer(tokens).line_number);
+        return make_error(tprint("Expected a stinky % statement, but reached the end of the file", token_type), peek_pointer(tokens).line_number);
     }
     if tokens[current_index.*].type != token_type {
-        return make_parsing_error(tprint("Expected a stinky % statement", token_type), tokens[current_index.*].line_number);
+        return make_error(tprint("Expected a stinky % statement", token_type), tokens[current_index.*].line_number);
     }
 
     current_index.* += 1;
@@ -957,7 +946,7 @@ try_to_consume_token :: (token_type: Token_Type, tokens: []Token, current_index:
     return "";
 }
 
-make_parsing_error :: (error: string, line_number: int) -> string {
+make_error :: (error: string, line_number: int) -> string {
     return tprint("Parsing error on line %: %", line_number, error);
 }
 
@@ -972,17 +961,17 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
     if #complete statement.kind == {
         case .PRINT;
             print(builder, "(print)\n");
-            pretty_print_expression(builder, statement.print_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement.print.expression, depth + 1);
         case .PRINTLN;
             print(builder, "(println)\n");
-            pretty_print_expression(builder, statement.println_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement.println.expression, depth + 1);
         case .IF;
             print(builder, "(if)\n");
-            pretty_print_expression(builder, statement.if_statement.test, depth + 1);
-            for statement: statement.if_statement.then_statements {
+            pretty_print_expression(builder, statement._if.test, depth + 1);
+            for statement: statement._if.then_statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
-            for statement: statement.if_statement.else_statements {
+            for statement: statement._if.else_statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .ASSIGNMENT;
@@ -995,17 +984,17 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
             pretty_print_expression(builder, statement.assignment.right, depth + 1);
         case .WHILE;
             print(builder, "(while)\n");
-            pretty_print_expression(builder, statement.while_statement.test, depth + 1);
-            for statement: statement.while_statement.statements {
+            pretty_print_expression(builder, statement._while.test, depth + 1);
+            for statement: statement._while.statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .FOR;
             print(builder, "(for)\n");
-            pretty_print_expression(builder, statement.for_statement.identifier, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.start, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.end, depth + 1);
-            pretty_print_expression(builder, statement.for_statement.step, depth + 1);
-            for statement: statement.for_statement.statements {
+            pretty_print_expression(builder, statement._for.identifier, depth + 1);
+            pretty_print_expression(builder, statement._for.start, depth + 1);
+            pretty_print_expression(builder, statement._for.end, depth + 1);
+            pretty_print_expression(builder, statement._for.step, depth + 1);
+            for statement: statement._for.statements {
                 pretty_print_statement(builder, statement, depth + 1);
             }
         case .FUNCTION_DECLARATION;
@@ -1018,12 +1007,12 @@ pretty_print_statement :: (builder: *String_Builder, statement: Model.Statement,
             }
         case .PARAMETER_DECLARATION;
             print(builder, "(param %)\n", statement.parameter_declaration.name);
-        case .FUNCTION_CALL_STATEMENT;
+        case .FUNCTION_CALL;
             print(builder, "(func call)\n");
-            pretty_print_expression(builder, statement.function_call_statement.expression, depth + 1);
-        case .RETURN_STATEMENT;
+            pretty_print_expression(builder, statement.function_call.expression, depth + 1);
+        case .RETURN;
             print(builder, "(return)\n");
-            pretty_print_expression(builder, statement.return_statement.expression, depth + 1);
+            pretty_print_expression(builder, statement._return.expression, depth + 1);
     }
 }
 
