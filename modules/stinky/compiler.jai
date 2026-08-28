@@ -216,7 +216,74 @@ compile_statement :: (node: Model.Statement, compiler: *Compiler) -> error: stri
         case .LOCAL_ASSIGNMENT;
             assert(false, "local");
         case .WHILE;
-            assert(false, "while");
+            test_label := add_label(compiler);
+            body_label := add_label(compiler);
+            exit_label := add_label(compiler);
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = test_label,
+                    },
+                },
+            );
+
+            error := compile_expression(node._while.test, compiler);
+            if error {
+                return error;
+            }
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .JMPZ,
+                    jmpz = {
+                        label_name = exit_label,
+                    },
+                }
+            );
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = body_label,
+                    },
+                },
+            );
+
+            compiler.scope_depth += 1;
+            for statement: node._while.statements {
+                error := compile_statement(statement, compiler);
+                if error {
+                    return error;
+                }
+            }
+            descope(compiler);
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .JMP,
+                    jmp = {
+                        label_name = test_label,
+                    },
+                }
+            );
+
+            array_add(
+                *compiler.code,
+                Instruction.{
+                    kind = .LABEL,
+                    label = {
+                        name = exit_label,
+                    },
+                },
+            );
+
         case .FOR;
             assert(false, "for");
         case .FUNCTION_DECLARATION;
