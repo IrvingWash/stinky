@@ -10,8 +10,8 @@ Compiler    :: #import,file "compiler.jai";
 VM          :: #import,file "virtual_machine.jai";
 
 Mode :: enum {
-    VM;
     INTERPRETER;
+    VM;
 }
 
 run :: (source: string, verbose: bool, mode: Mode) -> error: string, value: Interpreter.Stinky_Value {
