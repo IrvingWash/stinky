@@ -4,6 +4,14 @@ A toy interpreted programming language made to learn how all of this works. This
 
 The implementation of the language is in `modules/stinky`, not in `/source`
 
+## What's there
+Everything is done from scratch and without LLM assistance:
+- Tokenizer (Lexer)
+- Interpreter
+- Virtual machine emulator
+- Compiler for the virtual machine
+- Parser
+
 ## Usage
 
 ```sy
