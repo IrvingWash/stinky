@@ -2,6 +2,8 @@
 
 A toy interpreted programming language made to learn how all of this works. This is an implementation of the [Pinky language](https://pinky-lang.org/)
 
+The implementation of the language is in `modules/stinky`, not in `/source`
+
 ## Usage
 
 ```sy
